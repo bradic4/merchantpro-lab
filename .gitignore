@@ -1,0 +1,17 @@
+node_modules/
+dist/
+data/
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+
+# Local research captures, databases and editor files
+work/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+.vscode/
+.idea/

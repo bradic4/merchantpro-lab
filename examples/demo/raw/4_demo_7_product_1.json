@@ -1,0 +1,65 @@
+{
+  "lighthouseVersion": "13.4.1",
+  "requestedUrl": "https://demo.invalid/product",
+  "finalDisplayedUrl": "https://demo.invalid/product",
+  "fetchTime": "2026-01-01T12:02:01.000Z",
+  "userAgent": "Synthetic Chrome/130.0.0.0",
+  "environment": {
+    "hostUserAgent": "Synthetic Chrome/130.0.0.0"
+  },
+  "configSettings": {
+    "formFactor": "mobile",
+    "throttlingMethod": "simulate",
+    "disableStorageReset": false,
+    "screenEmulation": {
+      "mobile": true,
+      "width": 412,
+      "height": 823,
+      "deviceScaleFactor": 1.75
+    },
+    "throttling": {
+      "rttMs": 150,
+      "throughputKbps": 1638.4,
+      "cpuSlowdownMultiplier": 4
+    }
+  },
+  "categories": {
+    "performance": {
+      "score": 0.51
+    }
+  },
+  "audits": {
+    "largest-contentful-paint": {
+      "numericValue": 3600
+    },
+    "cumulative-layout-shift": {
+      "numericValue": 0.09
+    },
+    "total-blocking-time": {
+      "numericValue": 260
+    },
+    "first-contentful-paint": {
+      "numericValue": 1900
+    },
+    "server-response-time": {
+      "numericValue": 440
+    },
+    "resource-summary": {
+      "details": {
+        "items": [
+          {
+            "resourceType": "image",
+            "transferSize": 960000
+          },
+          {
+            "resourceType": "total",
+            "transferSize": 1510000
+          }
+        ]
+      }
+    }
+  },
+  "runWarnings": [
+    "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+  ]
+}

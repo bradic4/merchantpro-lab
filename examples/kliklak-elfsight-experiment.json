@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "kliklak-elfsight",
+  "storeId": "kliklak",
+  "pageId": "home",
+  "captureTimeoutMs": 300000,
+  "url": "https://www.kliklak.rs/",
+  "targetPrefix": "https://universe-static.elfsightcdn.com/app-releases/ai-chatbot/",
+  "hypothesis": "Učitavanje Elfsight AI chatbota značajno povećava TBT Kliklak početne strane. Testiramo uklanjanje njegovih zahteva u lokalnom browseru, bez izmene prodavnice.",
+  "protocol": {
+    "device": "mobile", "runs": 5, "location": "RS/Belgrade (lokalni računar operatora)",
+    "consent": "no-interaction", "browserCache": "cold", "cdnCache": "unknown",
+    "notes": "AB/BA parovi; isti Node/Chrome/Lighthouse; kontrola CPU benchmarka; blokada resursa nije test očuvane funkcije chatbota."
+  }
+}

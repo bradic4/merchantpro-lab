@@ -1,0 +1,5 @@
+--- installed-inline-script.js
++++ candidate-for-test-only.js
+@@
+-    widget.setAttribute('data-elfsight-app-lazy', '');
++    widget.setAttribute('data-elfsight-app-lazy', 'first-activity');

@@ -1,0 +1,404 @@
+{
+  "schemaVersion": 1,
+  "id": "af2293d2-9e10-43e9-ada4-29908e36d1d4",
+  "manifestHash": "3fca3b985a4592c3dee7e63da27f4090c5a01ce5930d79497fd7453bf1431768",
+  "manifest": {
+    "schemaVersion": 1,
+    "name": "SINTETIČKI DEMO — bez stvarnih prodavnica",
+    "protocol": {
+      "device": "mobile",
+      "runs": 3,
+      "location": "synthetic",
+      "consent": "no-interaction",
+      "browserCache": "cold",
+      "cdnCache": "unknown",
+      "notes": "Izmišljene vrednosti služe isključivo za demonstraciju alata."
+    },
+    "stores": [
+      {
+        "id": "demo",
+        "name": "Demo prodavnica (izmišljena)",
+        "origin": "https://demo.invalid",
+        "platform": "merchantpro",
+        "role": "sample",
+        "market": "unknown",
+        "theme": "unknown",
+        "notes": "SINTETIČKI DEMO",
+        "pages": [
+          {
+            "id": "home",
+            "type": "home",
+            "url": "https://demo.invalid/"
+          },
+          {
+            "id": "category",
+            "type": "category",
+            "url": "https://demo.invalid/category"
+          },
+          {
+            "id": "product",
+            "type": "product",
+            "url": "https://demo.invalid/product"
+          }
+        ]
+      }
+    ]
+  },
+  "createdAt": "2026-09-08T06:54:43.224Z",
+  "updatedAt": "2026-09-08T06:54:43.390Z",
+  "status": "completed",
+  "kind": "demo",
+  "items": [
+    {
+      "id": "4_demo_4_home_1",
+      "storeId": "demo",
+      "pageId": "home",
+      "repetition": 1,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_4_home_1",
+        "storeId": "demo",
+        "pageId": "home",
+        "repetition": 1,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/",
+        "rawFile": "raw/4_demo_4_home_1.json",
+        "rawSha256": "ada238ab4e4c71618d1f7c25eedfb1ae9d29a4de1b54d1694c8b6f0e134c9891",
+        "finalUrl": "https://demo.invalid/",
+        "fetchedAt": "2026-01-01T12:00:01.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 51,
+          "lcpMs": 3400,
+          "cls": 0.09,
+          "tbtMs": 260,
+          "fcpMs": 1900,
+          "ttfbMs": 440,
+          "imageTransferBytes": 960000,
+          "totalTransferBytes": 1510000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_4_home_2",
+      "storeId": "demo",
+      "pageId": "home",
+      "repetition": 2,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_4_home_2",
+        "storeId": "demo",
+        "pageId": "home",
+        "repetition": 2,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/",
+        "rawFile": "raw/4_demo_4_home_2.json",
+        "rawSha256": "bb634f18b9fca876d40c7ab5c31a2f3e02f6700eccd1bdf3ee3946d2ea6ed313",
+        "finalUrl": "https://demo.invalid/",
+        "fetchedAt": "2026-01-01T12:00:02.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 52,
+          "lcpMs": 3600,
+          "cls": 0.1,
+          "tbtMs": 280,
+          "fcpMs": 2000,
+          "ttfbMs": 450,
+          "imageTransferBytes": 970000,
+          "totalTransferBytes": 1520000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_4_home_3",
+      "storeId": "demo",
+      "pageId": "home",
+      "repetition": 3,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_4_home_3",
+        "storeId": "demo",
+        "pageId": "home",
+        "repetition": 3,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/",
+        "rawFile": "raw/4_demo_4_home_3.json",
+        "rawSha256": "ed7194a89e6c5d1bb8342918b9da467d687684d4ccd2a241b7e03cfdaa650173",
+        "finalUrl": "https://demo.invalid/",
+        "fetchedAt": "2026-01-01T12:00:03.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 53,
+          "lcpMs": 3800,
+          "cls": 0.11,
+          "tbtMs": 300,
+          "fcpMs": 2100,
+          "ttfbMs": 460,
+          "imageTransferBytes": 980000,
+          "totalTransferBytes": 1530000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_8_category_1",
+      "storeId": "demo",
+      "pageId": "category",
+      "repetition": 1,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_8_category_1",
+        "storeId": "demo",
+        "pageId": "category",
+        "repetition": 1,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/category",
+        "rawFile": "raw/4_demo_8_category_1.json",
+        "rawSha256": "48296af4b061c209924c5a7b72598f391beed0e29507aac0de240db6576a967b",
+        "finalUrl": "https://demo.invalid/category",
+        "fetchedAt": "2026-01-01T12:01:01.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 51,
+          "lcpMs": 3500,
+          "cls": 0.09,
+          "tbtMs": 260,
+          "fcpMs": 1900,
+          "ttfbMs": 440,
+          "imageTransferBytes": 960000,
+          "totalTransferBytes": 1510000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_8_category_2",
+      "storeId": "demo",
+      "pageId": "category",
+      "repetition": 2,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_8_category_2",
+        "storeId": "demo",
+        "pageId": "category",
+        "repetition": 2,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/category",
+        "rawFile": "raw/4_demo_8_category_2.json",
+        "rawSha256": "c087d904c32bc7f945e82e0fb6911d83986278ac350693d0cf2c9ea50e2282b1",
+        "finalUrl": "https://demo.invalid/category",
+        "fetchedAt": "2026-01-01T12:01:02.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 52,
+          "lcpMs": 3700,
+          "cls": 0.1,
+          "tbtMs": 280,
+          "fcpMs": 2000,
+          "ttfbMs": 450,
+          "imageTransferBytes": 970000,
+          "totalTransferBytes": 1520000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_8_category_3",
+      "storeId": "demo",
+      "pageId": "category",
+      "repetition": 3,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_8_category_3",
+        "storeId": "demo",
+        "pageId": "category",
+        "repetition": 3,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/category",
+        "rawFile": "raw/4_demo_8_category_3.json",
+        "rawSha256": "5c2170f213ea2901f228fa1c0b935cc1c9d3c66c795ce7ffbb6665b127313c41",
+        "finalUrl": "https://demo.invalid/category",
+        "fetchedAt": "2026-01-01T12:01:03.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 53,
+          "lcpMs": 3900,
+          "cls": 0.11,
+          "tbtMs": 300,
+          "fcpMs": 2100,
+          "ttfbMs": 460,
+          "imageTransferBytes": 980000,
+          "totalTransferBytes": 1530000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_7_product_1",
+      "storeId": "demo",
+      "pageId": "product",
+      "repetition": 1,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_7_product_1",
+        "storeId": "demo",
+        "pageId": "product",
+        "repetition": 1,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/product",
+        "rawFile": "raw/4_demo_7_product_1.json",
+        "rawSha256": "652c35e2f5bcd205992de2aaeae90d8a46eb50d5506105fefe4d2aa472079b37",
+        "finalUrl": "https://demo.invalid/product",
+        "fetchedAt": "2026-01-01T12:02:01.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 51,
+          "lcpMs": 3600,
+          "cls": 0.09,
+          "tbtMs": 260,
+          "fcpMs": 1900,
+          "ttfbMs": 440,
+          "imageTransferBytes": 960000,
+          "totalTransferBytes": 1510000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_7_product_2",
+      "storeId": "demo",
+      "pageId": "product",
+      "repetition": 2,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_7_product_2",
+        "storeId": "demo",
+        "pageId": "product",
+        "repetition": 2,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/product",
+        "rawFile": "raw/4_demo_7_product_2.json",
+        "rawSha256": "3f99243aa79f6ce390bb2892e7b8439e737e7f894dd479fc7eb8acd021b146c9",
+        "finalUrl": "https://demo.invalid/product",
+        "fetchedAt": "2026-01-01T12:02:02.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 52,
+          "lcpMs": 3800,
+          "cls": 0.1,
+          "tbtMs": 280,
+          "fcpMs": 2000,
+          "ttfbMs": 450,
+          "imageTransferBytes": 970000,
+          "totalTransferBytes": 1520000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    },
+    {
+      "id": "4_demo_7_product_3",
+      "storeId": "demo",
+      "pageId": "product",
+      "repetition": 3,
+      "status": "succeeded",
+      "measurement": {
+        "schemaVersion": 1,
+        "id": "4_demo_7_product_3",
+        "storeId": "demo",
+        "pageId": "product",
+        "repetition": 3,
+        "status": "pending",
+        "requestedUrl": "https://demo.invalid/product",
+        "rawFile": "raw/4_demo_7_product_3.json",
+        "rawSha256": "33426417e730acd7ca8fa7e82549def09b0a07aa3eb1969e0ce2f7d2faefa814",
+        "finalUrl": "https://demo.invalid/product",
+        "fetchedAt": "2026-01-01T12:02:03.000Z",
+        "source": "lighthouse",
+        "lighthouseVersion": "13.4.1",
+        "browserVersion": "130.0.0.0",
+        "device": "mobile",
+        "settingsHash": "58fbd035fb3dfba3671ea69d7bf8738cd3f019b8f555e4ed5c5c98902e0f94f2",
+        "metrics": {
+          "performance": 53,
+          "lcpMs": 4000,
+          "cls": 0.11,
+          "tbtMs": 300,
+          "fcpMs": 2100,
+          "ttfbMs": 460,
+          "imageTransferBytes": 980000,
+          "totalTransferBytes": 1530000
+        },
+        "warnings": [
+          "SINTETIČKI DEMO: ovo nije merenje prodavnice."
+        ],
+        "fieldData": null
+      }
+    }
+  ]
+}
