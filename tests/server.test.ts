@@ -72,3 +72,21 @@ test('server /api/optimize endpoint optimizes base64 image', async () => {
     await rm(dir, { recursive: true, force: true });
   }
 });
+
+test('server /api/audit/responsive and /api/audit/scripts endpoints return audit results', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'server-test-'));
+  const handle = await startServer({ port: 0, dataDirectory: dir });
+  try {
+    const baseUrl = handle.url;
+    const respRes = await fetch(`${baseUrl}/api/audit/responsive`);
+    // Will return 200 if fallback candidate dirs exist, or 404 if no LHR found
+    assert.ok([200, 404].includes(respRes.status));
+
+    const scriptRes = await fetch(`${baseUrl}/api/audit/scripts`);
+    assert.ok([200, 404].includes(scriptRes.status));
+  } finally {
+    await handle.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+

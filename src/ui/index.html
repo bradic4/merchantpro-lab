@@ -368,6 +368,7 @@
       <button class="nav-tab active" onclick="switchTab('tab-audit')">Analizator stranice</button>
       <button class="nav-tab" onclick="switchTab('tab-stores')">Sačuvana merenja</button>
       <button class="nav-tab" onclick="switchTab('tab-images')">Optimizacija slika</button>
+      <button class="nav-tab" onclick="switchTab('tab-delivery')">Responsive &amp; Skripte</button>
       <button class="nav-tab" onclick="switchTab('tab-api')">MerchantPro API</button>
     </nav>
   </header>
@@ -674,6 +675,101 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB 5: RESPONSIVE & SCRIPTS -->
+    <div id="tab-delivery" class="tab-pane">
+      <!-- Section 1: Responsive Image Delivery -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">1. Responsive isporuka slika (MerchantPro CDN)</div>
+            <div class="panel-desc">Analiza da li mobilni uređaji preuzimaju odgovarajuće dimenzije (/p/m/ umesto /p/l/), LCP preload status i lazy loading.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="fetchDeliveryAudits()">Osveži analizu</button>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-box primary">
+            <div class="kpi-label">Ukupno slika na stranici</div>
+            <div class="kpi-value" id="resp-total-images">--</div>
+            <div class="kpi-sub" id="resp-mp-images">-- MerchantPro CDN</div>
+          </div>
+          <div class="kpi-box warning">
+            <div class="kpi-label">Uočeni propusti</div>
+            <div class="kpi-value" id="resp-issues-count">--</div>
+            <div class="kpi-sub">stavki za optimizaciju</div>
+          </div>
+          <div class="kpi-box good">
+            <div class="kpi-label">Procenjena ušteda na mobilnom</div>
+            <div class="kpi-value" id="resp-savings-kb">--</div>
+            <div class="kpi-sub">zamena /p/l/ sa /p/m/</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Resurs (URL)</th>
+                <th>Tip problema</th>
+                <th>Prioritet</th>
+                <th>Detalji i nalaz</th>
+                <th>Preporučeni zahvat</th>
+              </tr>
+            </thead>
+            <tbody id="resp-issues-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">Učitavanje podataka...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Third-Party Scripts & CPU Impact -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">2. Eksterne skripte, vidžeti i CPU kočenje</div>
+            <div class="panel-desc">Detekcija chatbotova (npr. Elfsight), marketinških trackera i velikih JS paketa koji blokiraju procesor.</div>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-box primary">
+            <div class="kpi-label">Ukupno skripti</div>
+            <div class="kpi-value" id="script-total-count">--</div>
+            <div class="kpi-sub" id="script-3rd-count">-- eksternih</div>
+          </div>
+          <div class="kpi-box warning">
+            <div class="kpi-label">Eksterni JS prenos</div>
+            <div class="kpi-value" id="script-3rd-bytes">--</div>
+            <div class="kpi-sub">third-party kod</div>
+          </div>
+          <div class="kpi-box danger">
+            <div class="kpi-label">CPU vreme na glavnoj niti</div>
+            <div class="kpi-value" id="script-cpu-ms">--</div>
+            <div class="kpi-sub">izvršavanje skripti</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Skripta / Domen</th>
+                <th>Kategorija</th>
+                <th>Prioritet</th>
+                <th>Veličina</th>
+                <th>CPU vreme</th>
+                <th>Preporučeni zahvat</th>
+              </tr>
+            </thead>
+            <tbody id="script-issues-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">Učitavanje podataka...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -684,6 +780,7 @@
       event.target.classList.add('active');
 
       if (tabId === 'tab-stores') fetchStoredBenchmarks();
+      if (tabId === 'tab-delivery') fetchDeliveryAudits();
     }
 
     function copySnippet(button) {
@@ -982,10 +1079,77 @@
         } else {
           tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--ms-text-muted);">Nisu pronađeni artikli.</td></tr>';
         }
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--ms-red);">Greška: ${escapeHtml(err.message)}</td></tr>`;
+    // 5. RESPONSIVE & SCRIPTS DELIVERY AUDIT
+    async function fetchDeliveryAudits() {
+      const respTbody = document.getElementById('resp-issues-tbody');
+      const scriptTbody = document.getElementById('script-issues-tbody');
+      respTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">Učitavanje responsive analize...</td></tr>';
+      scriptTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">Učitavanje analize skripti...</td></tr>';
+
+      try {
+        const resp = await apiFetch('/api/audit/responsive');
+        const data = await resp.json();
+        if (resp.ok && data) {
+          document.getElementById('resp-total-images').innerText = data.totalImages ?? '--';
+          document.getElementById('resp-mp-images').innerText = `${data.merchantProImages ?? 0} MerchantPro CDN`;
+          document.getElementById('resp-issues-count').innerText = data.issues?.length ?? 0;
+          document.getElementById('resp-savings-kb').innerText = data.totalEstimatedSavingsBytes ? (data.totalEstimatedSavingsBytes / 1024).toFixed(1) + ' kB' : '0 kB';
+
+          if (data.issues && data.issues.length > 0) {
+            respTbody.innerHTML = data.issues.map(iss => `
+              <tr>
+                <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <a href="${safeLink(iss.url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(iss.url)}</a>
+                </td>
+                <td><span class="tag tag-neutral">${escapeHtml(iss.type)}</span></td>
+                <td><span class="tag ${iss.severity === 'critical' ? 'tag-danger' : 'tag-warning'}">${iss.severity}</span></td>
+                <td>${escapeHtml(iss.details)}</td>
+                <td><strong style="color:var(--ms-blue);">${escapeHtml(iss.suggestion)}</strong></td>
+              </tr>
+            `).join('');
+          } else {
+            respTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ms-green);">Nisu uočeni očigledni responsive delivery problemi.</td></tr>';
+          }
+        } else {
+          respTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">${escapeHtml(data.error || 'Nema sačuvanih podataka.')}</td></tr>`;
+        }
+      } catch (e) {
+        respTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ms-red);">Greška: ${escapeHtml(e.message)}</td></tr>`;
+      }
+
+      try {
+        const resp = await apiFetch('/api/audit/scripts');
+        const data = await resp.json();
+        if (resp.ok && data) {
+          document.getElementById('script-total-count').innerText = data.totalScripts ?? '--';
+          document.getElementById('script-3rd-count').innerText = `${data.thirdPartyScripts ?? 0} eksternih`;
+          document.getElementById('script-3rd-bytes').innerText = data.totalThirdPartyBytes ? (data.totalThirdPartyBytes / 1024).toFixed(1) + ' kB' : '0 kB';
+          document.getElementById('script-cpu-ms').innerText = data.totalMainThreadMs ? Math.round(data.totalMainThreadMs) + ' ms' : '0 ms';
+
+          if (data.issues && data.issues.length > 0) {
+            scriptTbody.innerHTML = data.issues.map(iss => `
+              <tr>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <a href="${safeLink(iss.url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(iss.domain || iss.url)}</a>
+                </td>
+                <td><span class="tag tag-neutral">${escapeHtml(iss.type)}</span></td>
+                <td><span class="tag ${iss.severity === 'critical' ? 'tag-danger' : 'tag-warning'}">${iss.severity}</span></td>
+                <td>${iss.transferBytes ? (iss.transferBytes / 1024).toFixed(1) + ' kB' : '—'}</td>
+                <td>${iss.mainThreadMs ? Math.round(iss.mainThreadMs) + ' ms' : '—'}</td>
+                <td><strong style="color:var(--ms-blue);">${escapeHtml(iss.suggestion)}</strong></td>
+              </tr>
+            `).join('');
+          } else {
+            scriptTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ms-green);">Nisu uočene teške blokirajuće skripte.</td></tr>';
+          }
+        } else {
+          scriptTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">${escapeHtml(data.error || 'Nema sačuvanih podataka.')}</td></tr>`;
+        }
+      } catch (e) {
+        scriptTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ms-red);">Greška: ${escapeHtml(e.message)}</td></tr>`;
       }
     }
+
 
     const historyPanel = document.createElement('section');
     historyPanel.style.cssText = 'padding:20px;margin:16px 0;border:1px solid #ddd';

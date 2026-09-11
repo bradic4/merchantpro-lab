@@ -5,6 +5,8 @@ import { join, resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { optimizeImage, type ImageProfile } from './image-pipeline.js';
 import { generateRemediationPlan } from './remediation.js';
+import { auditResponsiveImages } from './responsive-audit.js';
+import { auditScripts } from './script-audit.js';
 import { benchmarkRows } from './benchmark-rows.js';
 import { captureLighthouse } from './runner.js';
 import { readManifest, validateManifest, safeId } from './manifest.js';
@@ -276,41 +278,63 @@ export async function startServer(options: ServerOptions = {}): Promise<ServerHa
         return;
       }
 
+      const loadLatestLhr = async (): Promise<any | null> => {
+        const candidateDirs = [
+          auditsDir,
+          join(projectRoot, 'data', 'kliklak-elfsight-2026-09-09-v2', 'raw'),
+          join(projectRoot, 'data', 'benchmark-sr', 'raw'),
+        ];
+        for (const d of candidateDirs) {
+          try {
+            const files = await readdir(d);
+            const dated = await Promise.all(files.filter(f => f.endsWith('.json') && !f.endsWith('.trace.json') && !f.endsWith('.network.json')).map(async f => ({f,time:(await stat(join(d,f))).mtimeMs})));
+            const jsonFiles = dated.sort((a,b)=>b.time-a.time).map(x=>x.f);
+            if (jsonFiles.length > 0) {
+              return JSON.parse(await readFile(join(d, jsonFiles[0]!), 'utf8'));
+            }
+          } catch { /* continue */ }
+        }
+        return null;
+      };
+
       // 7. Dynamic Remediation: GET plan for specific audit or default
       if (pathname === '/api/remediation' && req.method === 'GET') {
         const fileParam = parsedUrl.searchParams.get('file');
-        let lhrData: any = null;
-
         if (fileParam) {
           sendJson(400, { error: 'Čitanje proizvoljne putanje nije podržano; koristite poslednju sačuvanu analizu.' });
           return;
-        } else {
-          // Find the newest JSON in ui-audits or fallback to benchmark raw
-          const candidateDirs = [
-            auditsDir,
-            join(projectRoot, 'data', 'kliklak-elfsight-2026-09-09-v2', 'raw'),
-            join(projectRoot, 'data', 'benchmark-sr', 'raw'),
-          ];
-          for (const d of candidateDirs) {
-            try {
-              const files = await readdir(d);
-              const dated = await Promise.all(files.filter(f => f.endsWith('.json') && !f.endsWith('.trace.json') && !f.endsWith('.network.json')).map(async f => ({f,time:(await stat(join(d,f))).mtimeMs})));
-              const jsonFiles = dated.sort((a,b)=>b.time-a.time).map(x=>x.f);
-              if (jsonFiles.length > 0) {
-                lhrData = JSON.parse(await readFile(join(d, jsonFiles[0]!), 'utf8'));
-                break;
-              }
-            } catch { /* continue */ }
-          }
         }
-
+        const lhrData = await loadLatestLhr();
         if (!lhrData) {
           sendJson(404, { error: 'Nema sačuvanih Lighthouse rezultata. Pokrenite analizu za bilo koji sajt.' });
           return;
         }
-
         const plan = generateRemediationPlan(lhrData);
         sendJson(200, plan);
+        return;
+      }
+
+      // 7b. Responsive Images Audit endpoint
+      if (pathname === '/api/audit/responsive' && req.method === 'GET') {
+        const lhrData = await loadLatestLhr();
+        if (!lhrData) {
+          sendJson(404, { error: 'Nema sačuvanih Lighthouse rezultata.' });
+          return;
+        }
+        const result = auditResponsiveImages(lhrData);
+        sendJson(200, result);
+        return;
+      }
+
+      // 7c. Scripts & CPU Audit endpoint
+      if (pathname === '/api/audit/scripts' && req.method === 'GET') {
+        const lhrData = await loadLatestLhr();
+        if (!lhrData) {
+          sendJson(404, { error: 'Nema sačuvanih Lighthouse rezultata.' });
+          return;
+        }
+        const result = auditScripts(lhrData);
+        sendJson(200, result);
         return;
       }
 

@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { inspectImages, compareImageSnapshots, loadVerifiedSnapshot } from './image-inspector.js';
+import sharp from 'sharp';
+import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
 import { basename, dirname, extname, join, resolve } from 'node:path';
@@ -35,6 +38,8 @@ const help = `MerchantPro Lab 0.1 — interni alat za fazu A
   optimize-images --input path/to/images --out data/optimized [--profile thumb|medium|large|banner] [--quality 80] [--format webp|avif]
   remediation-plan --lhr data/raw/run.json --out data/remediation.md
   rollback   --job data/optimized/optimization-job.json
+  inspect-images --url URL --label A|B|C|restored --out NEW_DIRECTORY [--width 412 --height 823 --dpr 1.75 --gallery-selector CSS]
+  compare-images --before SNAPSHOT --after SNAPSHOT --index N --out REPORT
   ui         [--port 3333]
 
 Pre run komande upišite protocol.location u manifest. Profil sadrži 3 ili 5 ponavljanja.
@@ -51,11 +56,23 @@ async function main(): Promise<void> {
     store: { type: 'string' }, page: { type: 'string' }, input: { type: 'string', multiple: true }, state: { type: 'string' },
     resume: { type: 'boolean' }, 'include-images': { type: 'boolean' }, 'max-products': { type: 'string' }, 'api-key': { type: 'string' },
     profile: { type: 'string' }, format: { type: 'string' }, quality: { type: 'string' }, job: { type: 'string' }, lhr: { type: 'string' },
+    url: {type:'string'}, label: {type:'string'}, width: {type:'string'}, height: {type:'string'}, dpr: {type:'string'}, 'gallery-selector': {type:'string'},
+    before: {type:'string'}, after: {type:'string'}, index: {type:'string'},
     port: { type: 'string' }
   } });
   const need = (key: string): string => { const value = v[key as keyof typeof v]; if (typeof value !== 'string' || !value) throw new Error(`Nedostaje --${key}.`); return value; };
   const manifestPath = () => resolve(need('manifest'));
   const output = () => resolve(need('out'));
+  if(command === 'inspect-images') {
+    const snapshots = await inspectImages({url:need('url'),state:need('label') as 'A'|'B'|'C'|'restored',directory:output(),
+      width:v.width?Number(v.width):undefined,height:v.height?Number(v.height):undefined,dpr:v.dpr?Number(v.dpr):undefined,gallerySelector:v['gallery-selector']});
+    console.log(`Sačuvano ${snapshots.length} snimaka: ${output()}`); return;
+  }
+  if(command === 'compare-images') {
+    const index=Number(need('index')); if(!Number.isInteger(index)||index<0)throw new Error('Index mora biti nenegativan ceo broj.');
+    const result=compareImageSnapshots(await loadVerifiedSnapshot(need('before')),await loadVerifiedSnapshot(need('after')),index);
+    await writeJson(output(),result); console.log(JSON.stringify(result,null,2)); return;
+  }
   if (command === 'experiment') {
     const config = validateExperiment(await readJson(resolve(need('config'))));
     const state = await runExperiment({ config, directory: output(), resume: v.resume, chromePath: v.chrome, onProgress: console.log });
@@ -141,7 +158,8 @@ async function main(): Promise<void> {
   if (command === 'optimize-images') {
     const rawInputs = Array.isArray(v.input) ? v.input : (typeof v.input === 'string' ? [v.input] : []);
     if (rawInputs.length === 0) throw new Error('Nedostaje --input.');
-    const outDir = output();
+    const exportRoot = output();
+    const outDir = join(exportRoot, `job-${randomUUID()}`);
     const backupDir = join(outDir, 'backups');
     await mkdir(outDir, { recursive: true });
     await mkdir(backupDir, { recursive: true });
@@ -185,17 +203,18 @@ async function main(): Promise<void> {
         });
 
         const targetBase = filename.replace(/\.[^/.]+$/, '');
-        const targetFilename = `${targetBase}.${optResult.format}`;
+        const targetFilename = `${targetBase}-${i + 1}.${optResult.format}`;
         const targetPath = join(outDir, targetFilename);
 
-        await writeFile(targetPath, optResult.buffer);
+        await writeFile(targetPath, optResult.buffer, { flag: 'wx' });
+        const originalMeta = await sharp(backup.content).metadata();
 
         const item: JobItem = {
           id: `img-${i + 1}`,
           originalPath: src,
           originalSha256: backup.sha256,
           originalBytes: backup.bytes,
-          originalDimensions: { width: optResult.width, height: optResult.height },
+          originalDimensions: { width: originalMeta.width!, height: originalMeta.height! },
           backupPath: backup.backupPath,
           optimizedPath: targetPath,
           optimizedSha256: calcSha256(optResult.buffer),
@@ -247,6 +266,7 @@ async function main(): Promise<void> {
 
     const jobPath = join(outDir, 'optimization-job.json');
     await saveJobManifest(jobManifest, jobPath);
+    if (jobItems.some(item => item.status === 'failed')) process.exitCode = 2;
 
     console.log(`\n--- Rezime optimizacije ---`);
     console.log(`Ukupno original: ${(totalOriginal / 1024).toFixed(1)} kB`);
@@ -264,6 +284,8 @@ async function main(): Promise<void> {
     console.log(`Akcioni plan sanacije sačuvan u: ${outPath}`);
     console.log(`Pronađeno ${plan.issues.length} ključnih propusta:`);
     plan.issues.forEach((issue, idx) => console.log(` ${idx + 1}. [${issue.impact.toUpperCase()}] ${issue.title}`));
+    if (plan.responsiveAudit) console.log(`\nResponsive isporuka: ${plan.responsiveAudit.summary}`);
+    if (plan.scriptAudit) console.log(`Skripte i CPU trošak: ${plan.scriptAudit.summary}`);
     return;
   }
   if (command === 'rollback') {

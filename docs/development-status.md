@@ -2,6 +2,14 @@
 
 Plan iz fajla `MerchantPro_procena_i_implementacioni_plan.md` pregledan je 8. septembra 2026. Korišćen je kao projektni materijal; preporuke i navedeni rokovi/cene nisu potvrđeni rezultati.
 
+## Aktuelno stanje — 11. septembar 2026.
+
+Postoje lokalni panel, SQLite red, engine slika i kontrolisani eksperimenti. Merenja obuhvataju pet MerchantPro domena i dve kontrole; proširenje sa tri prodavnice završeno je sa 27/27 uspešnih izvršavanja. Prvobitni Kliklak skup ostaje nepotpun. To nije dokaz MerchantPro-specifičnog uzroka niti uspeha automatske intervencije.
+
+Dodata je kompatibilnost ekstrakcije sa Lighthouse 13 insights, izvoz bez kolizija i CLI inspektor stvarno učitanih slika. [Uputstvo i ograničenja](image-evidence.md). Pilot sa udaljenom primenom i vraćanjem još nije izvršen; konektor ostaje read-only.
+
+Tekst ispod beleži početnu isporuku od 8. septembra i nije aktuelan popis funkcionalnosti/testova.
+
 ## Odluka za ovaj inkrement
 
 Revidirani odeljak 15 jasno menja redosled: prvo uporedna analiza, zatim izbor rešenja. Odeljci za obradu slika su razrađen mogući pravac. Node.js/TypeScript CLI odgovara odeljku 8.2 i može odmah da podrži prvi istraživački ciklus.

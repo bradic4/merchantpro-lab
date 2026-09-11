@@ -81,37 +81,15 @@ test('analyzeResources handles malformed audit data gracefully', () => {
 
   const result = analyzeResources(lhr);
   assert.ok(result);
-  assert.equal(result.totalRequests, 0);
+  assert.equal(result.totalRequests, null);
   assert.equal(result.images.length, 0);
-  assert.equal(result.totalImageBytes, 0);
+  assert.equal(result.totalImageBytes, null);
   assert.equal(result.lcpElement, null);
   assert.equal(result.blockingResources.length, 0);
-  assert.equal(result.totalBlockingMs, 0);
+  assert.equal(result.totalBlockingMs, null);
   assert.equal(result.domElements, null);
 });
 
-test('analyzeResources falls back to largest-contentful-paint for LCP', () => {
-  const lhr = {
-    audits: {
-      'largest-contentful-paint': {
-        details: {
-          items: [
-            {
-              url: 'https://example.com/hero.jpg',
-              node: { nodeName: 'DIV' },
-              type: 'text'
-            }
-          ]
-        }
-      }
-    }
-  };
-
-  const result = analyzeResources(lhr);
-  assert.ok(result);
-  assert.deepEqual(result.lcpElement, {
-    url: 'https://example.com/hero.jpg',
-    type: 'text',
-    tagName: 'DIV'
-  });
+test('LCP metric alone does not invent element evidence', () => {
+  assert.equal(analyzeResources({audits:{'largest-contentful-paint':{numericValue:2500}}}),null);
 });

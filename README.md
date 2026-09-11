@@ -97,10 +97,12 @@ Konektor koristi dokumentovani Basic Auth preko HTTPS-a, razmak od najmanje dve 
 1. Uneti stvarne prodavnice i završiti početna merenja.
 2. Dopuniti [evidenciju nalaza](docs/evidence-template.md) resursima, trace dokazima, nativnim mogućnostima i razgovorima.
 3. Izabrati jedan POC kada isti rešiv problem postoji na najmanje tri nezavisne prodavnice.
-4. Za taj POC razviti kontrolisanu intervenciju i proveru rezultata/povratka. Image upload, brisanje, obrada, queue, PostgreSQL, NestJS, Angular i naplata pripadaju narednim inkrementima prema nalazima.
+4. Za taj POC razviti kontrolisanu intervenciju i proveru rezultata/povratka. Lokalna obrada slika i SQLite red analiza već postoje. Upis slika u MerchantPro, provereno vraćanje udaljenog stanja i naplata ostaju budući koraci.
 
 Detaljnija procena plana i trenutno stanje: [development-status.md](docs/development-status.md).
 
 Nastavak razvoja: [kontrolisani A/B eksperimenti](docs/controlled-experiments.md) podržavaju proveru uticaja eksternog dodatka na jednom URL-u, uz potvrdu blokade u mrežnom zapisu.
 
 Izvori: [MerchantPro API](https://docs.merchantpro.com/api/), [Products API](https://docs.merchantpro.com/api/endpoints/products/), [Lighthouse programmatic usage](https://github.com/GoogleChrome/lighthouse/blob/main/docs/readme.md), [PSI response](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed).
+
+Inspekcija stvarno učitanih slika i A/B/C priprema: [image-evidence.md](docs/image-evidence.md).

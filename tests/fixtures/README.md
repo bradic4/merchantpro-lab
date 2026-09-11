@@ -1,0 +1,1 @@
+Lighthouse 13.4.1 insight fixture extracted from a successful local capture in discovery-expansion-2026-09-09. URLs replaced consistently; descriptions and node paths/labels removed. Structure, durations and DOM count retained. Snippet URL is intentionally incomplete and must not be used as currentSrc.

@@ -24,10 +24,11 @@ export interface BlockingResource {
 
 export interface PageResources {
   images: ImageResource[];
-  totalImageBytes: number;
-  lcpElement: { url: string | null; type: string | null; tagName: string | null } | null;
+  totalImageBytes: number | null;
+  lcpElement: { url: string | null; type: string | null; tagName: string | null; selector?: string | null } | null;
   blockingResources: BlockingResource[];
-  totalBlockingMs: number;
+  totalBlockingMs: number | null;
+  blockingDurationMeaning: 'sum-of-request-durations-not-TBT';
   domElements: number | null;
   totalRequests: number | null;
 }
@@ -39,18 +40,18 @@ export function analyzeResources(lhr: unknown): PageResources | null {
   if (!audits) return null;
 
   const networkAudit = object(audits['network-requests']);
-  const lcpElementAudit = object(audits['largest-contentful-paint-element']) ?? object(audits['largest-contentful-paint']);
-  const blockingAudit = object(audits['render-blocking-resources']);
-  const domAudit = object(audits['dom-size']);
+  const lcpElementAudit = object(audits['lcp-discovery-insight']) ?? object(audits['lcp-breakdown-insight']) ?? object(audits['largest-contentful-paint-element']);
+  const blockingAudit = object(audits['render-blocking-insight']) ?? object(audits['render-blocking-resources']);
+  const domAudit = object(audits['dom-size-insight']) ?? object(audits['dom-size']);
 
   if (!networkAudit && !lcpElementAudit && !blockingAudit && !domAudit) return null;
 
   const rawNetworkItems = object(networkAudit?.details)?.items;
   const networkItems: unknown[] = Array.isArray(rawNetworkItems) ? rawNetworkItems : [];
-  const totalRequests = networkAudit ? networkItems.length : null;
+  const totalRequests = Array.isArray(rawNetworkItems) ? networkItems.length : null;
 
   const images: ImageResource[] = [];
-  let totalImageBytes = 0;
+  let totalImageBytes: number | null = Array.isArray(rawNetworkItems) ? 0 : null;
 
   for (const item of networkItems) {
     const req = object(item);
@@ -60,7 +61,8 @@ export function analyzeResources(lhr: unknown): PageResources | null {
     const mimeType = string(req.mimeType);
     if (mimeType?.startsWith('image/')) {
       const transferSize = finite(req.transferSize);
-      if (transferSize) totalImageBytes += transferSize;
+      if (transferSize === null) totalImageBytes = null;
+      else if (totalImageBytes !== null) totalImageBytes += transferSize;
       images.push({
         url,
         mimeType,
@@ -79,15 +81,14 @@ export function analyzeResources(lhr: unknown): PageResources | null {
   let lcpType: string | null = null;
   let lcpTagName: string | null = null;
 
-  if (lcpItems.length > 0) {
-    const first = object(lcpItems[0]);
-    if (first) {
-      const node = object(first.node);
-      lcpType = string(first.type) ?? null;
-      lcpUrl = string(first.url) ?? null;
-      lcpTagName = node ? string(node.nodeName) : null;
-    }
-  }
+  const first = object(lcpItems[0]);
+  const node = lcpItems.map(object).find(x => x?.type === 'node') ?? object(first?.node);
+  const selector = string(node?.selector);
+  const snippet = string(node?.snippet);
+  lcpTagName = string(node?.nodeName) ?? snippet?.match(/^<([a-z0-9-]+)/i)?.[1]?.toUpperCase() ?? null;
+  lcpType = lcpTagName === 'IMG' ? 'image' : string(first?.type) === 'image' ? 'image' : null;
+  // A snippet src can be truncated or differ from currentSrc. Never guess the selected URL.
+  lcpUrl = string(first?.url);
 
   if (lcpUrl) {
     for (const img of images) {
@@ -100,7 +101,7 @@ export function analyzeResources(lhr: unknown): PageResources | null {
   const rawBlockingItems = object(blockingAudit?.details)?.items;
   const blockingItems: unknown[] = Array.isArray(rawBlockingItems) ? rawBlockingItems : [];
   const blockingResources: BlockingResource[] = [];
-  let totalBlockingMs = 0;
+  let totalBlockingMs: number | null = Array.isArray(rawBlockingItems) ? 0 : null;
 
   for (const item of blockingItems) {
     const req = object(item);
@@ -108,7 +109,8 @@ export function analyzeResources(lhr: unknown): PageResources | null {
     const url = string(req.url);
     if (!url) continue;
     const wastedMs = finite(req.wastedMs);
-    if (wastedMs) totalBlockingMs += wastedMs;
+    if (wastedMs === null) totalBlockingMs = null;
+    else if (totalBlockingMs !== null) totalBlockingMs += wastedMs;
     blockingResources.push({
       url,
       wastedMs,
@@ -116,14 +118,15 @@ export function analyzeResources(lhr: unknown): PageResources | null {
     });
   }
 
-  const domElements = finite(domAudit?.numericValue);
+  const domElements = finite(domAudit?.numericValue) ?? finite(object(object(domAudit?.details)?.debugData)?.totalElements);
 
   return {
     images,
     totalImageBytes,
-    lcpElement: lcpUrl || lcpType || lcpTagName ? { url: lcpUrl, type: lcpType, tagName: lcpTagName } : null,
+    lcpElement: lcpUrl || lcpType || lcpTagName || selector ? { url: lcpUrl, type: lcpType, tagName: lcpTagName, ...(selector ? {selector} : {}) } : null,
     blockingResources,
     totalBlockingMs,
+    blockingDurationMeaning: 'sum-of-request-durations-not-TBT',
     domElements,
     totalRequests,
   };

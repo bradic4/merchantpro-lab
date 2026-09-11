@@ -1,5 +1,8 @@
+import { auditResponsiveImages, type ResponsiveAuditResult } from './responsive-audit.js';
+import { auditScripts, type ScriptAuditResult } from './script-audit.js';
+
 export interface DetectedIssue {
-  type: 'heavy-image' | 'desktop-image-on-mobile' | 'blocking-chatbot' | 'blocking-tracker' | 'missing-lazy-loading' | 'missing-lcp-preload';
+  type: 'heavy-image' | 'desktop-image-on-mobile' | 'blocking-chatbot' | 'blocking-tracker' | 'missing-lazy-loading' | 'missing-lcp-preload' | 'oversized-variant' | 'sync-blocking' | 'high-cpu' | 'heavy-bundle';
   title: string;
   description: string;
   impact: 'high' | 'medium' | 'low';
@@ -18,6 +21,8 @@ export interface RemediationPlan {
   imageBytes: number | null;
   issues: DetectedIssue[];
   markdownReport: string;
+  responsiveAudit?: ResponsiveAuditResult | null;
+  scriptAudit?: ScriptAuditResult | null;
 }
 
 /**
@@ -42,17 +47,24 @@ export function generateRemediationPlan(lhr: any): RemediationPlan {
 
   const issues: DetectedIssue[] = [];
 
+  // Run deep audit modules
+  const responsiveAudit = auditResponsiveImages(lhr);
+  const scriptAudit = auditScripts(lhr);
+
   // 1. Detect Desktop images served on mobile (e.g. /p/l/ pattern in MerchantPro)
   const desktopImagesOnMobile = networkRequests
     .filter(r => typeof r.url === 'string' && r.url.includes('/p/l/') && r.mimeType?.startsWith('image/'))
     .map(r => r.url as string);
 
   if (lhr?.configSettings?.formFactor === 'mobile' && desktopImagesOnMobile.length > 0) {
+    const estSavingsBytes = responsiveAudit?.totalEstimatedSavingsBytes ?? 0;
+    const estSavingsStr = estSavingsBytes > 0 ? `cca ${(estSavingsBytes / 1024).toFixed(1)} kB prenosa` : undefined;
     issues.push({
       type: 'desktop-image-on-mobile',
       title: 'Proveriti dimenzije slika na mobilnom prikazu',
       description: `Zabeleženo ${desktopImagesOnMobile.length} URL-ova sa /p/l/. Putanja ne dokazuje prevelike dimenzije. Uporediti stvarne dimenzije, prikazanu veličinu i DPR pre promene.`,
       impact: 'medium',
+      estimatedSavings: estSavingsStr,
       affectedUrls: desktopImagesOnMobile.slice(0, 10),
       remediationSnippet: `<!-- Kandidat: tek nakon provere stvarnih URL-ova i dimenzija napraviti <picture> ili srcset.
 Ne primenjivati lazy loading na LCP sliku. Nazivi polja zavise od teme. -->`,
@@ -76,7 +88,36 @@ node dist/cli.js optimize-images --input ./data/raw-images --out ./data/optimize
     });
   }
 
-  // 3. Detect Elfsight AI Chatbot
+  // 3. Detect LCP not preloaded from responsive audit
+  if (responsiveAudit) {
+    const lcpIssue = responsiveAudit.issues.find(i => i.type === 'lcp-not-preloaded');
+    if (lcpIssue) {
+      issues.push({
+        type: 'missing-lcp-preload',
+        title: 'LCP slika kasno počinje sa učitavanjem (nedostaje preload)',
+        description: lcpIssue.details,
+        impact: 'high',
+        affectedUrls: [lcpIssue.url],
+        remediationSnippet: `<!-- Dodati u <head> šablona za brže pokretanje preuzimanja LCP slike: -->
+<link rel="preload" fetchpriority="high" as="image" href="${lcpIssue.url}" />`,
+      });
+    }
+
+    const lazyIssues = responsiveAudit.issues.filter(i => i.type === 'missing-lazy');
+    if (lazyIssues.length > 0) {
+      issues.push({
+        type: 'missing-lazy-loading',
+        title: 'Slike ispod prvog ekrana bez lazy loading atributa',
+        description: `Pronađeno ${lazyIssues.length} slika koje se učitavaju rano a nisu LCP element.`,
+        impact: 'medium',
+        affectedUrls: lazyIssues.map(i => i.url).slice(0, 5),
+        remediationSnippet: `<!-- Dodati na <img> elemente van prvog ekrana: -->
+<img src="..." loading="lazy" decoding="async" alt="..." />`,
+      });
+    }
+  }
+
+  // 4. Detect Elfsight AI Chatbot
   const elfsightRequests = networkRequests.filter(
     r => typeof r.url === 'string' && r.url.startsWith('https://universe-static.elfsightcdn.com/app-releases/ai-chatbot/')
   );
@@ -93,7 +134,7 @@ node dist/cli.js optimize-images --input ./data/raw-images --out ./data/optimize
     });
   }
 
-  // 4. Detect other heavy 3rd-party trackers
+  // 5. Detect other heavy 3rd-party trackers
   const trackerDomains = ['mc.yandex.ru', 'retargeting.app', 'ct.pinterest.com', 'connect.facebook.net', 'google-analytics.com'];
   const detectedTrackers = networkRequests
     .filter(r => typeof r.url === 'string' && trackerDomains.some(d => { try { const h = new URL(r.url).hostname; return h === d || h.endsWith('.' + d); } catch { return false; } }))
@@ -167,6 +208,20 @@ if ('requestIdleCallback' in window) {
     lines.push(``);
   });
 
+  if (responsiveAudit) {
+    lines.push(`## Analiza responsive isporuke slika`);
+    lines.push(``);
+    lines.push(responsiveAudit.summary);
+    lines.push(``);
+  }
+
+  if (scriptAudit) {
+    lines.push(`## Analiza eksternih skripti i CPU opterećenja`);
+    lines.push(``);
+    lines.push(scriptAudit.summary);
+    lines.push(``);
+  }
+
   return {
     storeUrl,
     auditDate,
@@ -177,5 +232,7 @@ if ('requestIdleCallback' in window) {
     imageBytes,
     issues,
     markdownReport: lines.join('\n'),
+    responsiveAudit,
+    scriptAudit,
   };
 }
