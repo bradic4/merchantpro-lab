@@ -81,8 +81,49 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
     tiktok: 'idle',
     errors: [],
     eventsBuffered: 0,
+    totalBlockingTime: 0,
     startTime: Date.now()
   };
+
+  // Real-world RUM: Track cumulative main-thread blocking time (TBT)
+  if (typeof PerformanceObserver !== 'undefined') {
+    try {
+      var po = new PerformanceObserver(function(list) {
+        var entries = list.getEntries();
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].duration > 50) {
+            window.__sdTelemetry.totalBlockingTime += Math.round(entries[i].duration - 50);
+          }
+        }
+      });
+      po.observe({ type: 'longtask', buffered: true });
+    } catch (e) {}
+  }
+
+  // GA4 Field Ping: Emits persistent telemetry event on session/page exit
+  var pingSent = false;
+  function sendFieldPing() {
+    if (pingSent) return;
+    pingSent = true;
+    try {
+      window.dataLayer = window.dataLayer || [];
+      window.dataLayer.push({
+        event: 'smart_deferral_telemetry',
+        sd_cohort: window.__sdTelemetry.cohort,
+        sd_mode: window.__sdTelemetry.mode,
+        sd_meta: window.__sdTelemetry.meta,
+        sd_gtm: window.__sdTelemetry.gtm,
+        sd_tiktok: window.__sdTelemetry.tiktok,
+        sd_errors_count: window.__sdTelemetry.errors ? window.__sdTelemetry.errors.length : 0,
+        sd_events_buffered: window.__sdTelemetry.eventsBuffered || 0,
+        sd_tbt_ms: window.__sdTelemetry.totalBlockingTime || 0
+      });
+    } catch (e) {}
+  }
+  window.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') sendFieldPing();
+  });
+  window.addEventListener('pagehide', sendFieldPing);
 
   // --- IMMEDIATE FALLBACK MODE (PRESERVES BASELINE TRACKING BEHAVIOR) ---
   // If Canary is OFF, kill-switched, or user in baseline cohort, scripts execute immediately
