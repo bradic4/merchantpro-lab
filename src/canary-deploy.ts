@@ -31,44 +31,86 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
 (function(window, document) {
   'use strict';
 
-  // --- TRAFFIC ALLOCATION & STICKY CANARY BUCKETING ---
+  // --- SAFE SESSION STORAGE HELPERS ---
+  function safeGetSession(key) {
+    try {
+      return (typeof window !== 'undefined' && window.sessionStorage) ? window.sessionStorage.getItem(key) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  function safeSetSession(key, val) {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) window.sessionStorage.setItem(key, val);
+    } catch (_) {}
+  }
+  function safeRemoveSession(key) {
+    try {
+      if (typeof window !== 'undefined' && window.sessionStorage) window.sessionStorage.removeItem(key);
+    } catch (_) {}
+  }
+
+  // --- TRAFFIC ALLOCATION & COHORT CLASSIFICATION ---
   var urlParams = window.location.search || '';
   
-  // URL parameters can set or clear session flags
-  try {
-    if (window.sessionStorage) {
-      if (urlParams.indexOf('canary=1') !== -1) window.sessionStorage.setItem('__sdForced', '1');
-      if (urlParams.indexOf('canary=0') !== -1) window.sessionStorage.removeItem('__sdForced');
-      if (urlParams.indexOf('no_defer=1') !== -1) window.sessionStorage.setItem('__sdKillSwitch', '1');
-      if (urlParams.indexOf('no_defer=0') !== -1) window.sessionStorage.removeItem('__sdKillSwitch');
-    }
-  } catch (e) {}
+  if (urlParams.indexOf('canary=1') !== -1) safeSetSession('__sdForced', '1');
+  if (urlParams.indexOf('canary=0') !== -1) safeRemoveSession('__sdForced');
+  if (urlParams.indexOf('no_defer=1') !== -1) safeSetSession('__sdKillSwitch', '1');
+  if (urlParams.indexOf('no_defer=0') !== -1) safeRemoveSession('__sdKillSwitch');
 
   var isKillSwitched = window.SMART_DEFERRAL_ENABLED === false || 
     urlParams.indexOf('no_defer=1') !== -1 || 
-    (window.sessionStorage && window.sessionStorage.getItem('__sdKillSwitch') === '1');
+    safeGetSession('__sdKillSwitch') === '1';
 
   var isCanaryForced = urlParams.indexOf('canary=1') !== -1 || 
-    (window.sessionStorage && window.sessionStorage.getItem('__sdForced') === '1');
-  
-  // Sticky session assignment via sessionStorage (fallback to random if storage blocked)
-  var bucket = null;
+    safeGetSession('__sdForced') === '1';
+
+  // Search engine crawler guard (always baseline)
+  var userAgent = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+  var isSearchEngine = /Googlebot|bingbot|Baiduspider|YandexBot/i.test(userAgent);
+
+  // High-confidence Brazilian browser heuristic (strict Timezone AND Portuguese locale)
+  var tz = '';
+  var lang = '';
   try {
-    bucket = window.sessionStorage ? window.sessionStorage.getItem('__sdBucket') : null;
-    if (bucket === null) {
-      bucket = String(Math.floor(Math.random() * 100));
-      if (window.sessionStorage) {
-        window.sessionStorage.setItem('__sdBucket', bucket);
-      }
-    }
-  } catch (e) {
+    tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    lang = ((typeof navigator !== 'undefined' && navigator.language) || '').toLowerCase();
+  } catch (_) {}
+  var brazilTimezones = [
+    'America/Sao_Paulo',
+    'America/Fortaleza',
+    'America/Recife',
+    'America/Belem',
+    'America/Manaus',
+    'America/Cuiaba'
+  ];
+  var isBrazilHeuristic = brazilTimezones.indexOf(tz) !== -1 && /^pt(-br)?$/i.test(lang);
+
+  // Sticky session bucket (0-99)
+  var bucket = safeGetSession('__sdBucket');
+  if (bucket === null) {
     bucket = String(Math.floor(Math.random() * 100));
+    safeSetSession('__sdBucket', bucket);
+  }
+  var bucketNum = Number(bucket);
+
+  // Cohort resolution
+  var cohort = 'baseline';
+  if (isKillSwitched) {
+    cohort = 'kill_switched';
+  } else if (isSearchEngine) {
+    cohort = 'search_engine_baseline';
+  } else if (isCanaryForced) {
+    cohort = 'forced_canary';
+  } else if (isBrazilHeuristic) {
+    cohort = 'brazil_heuristic_canary';
+  } else if (bucketNum < ${canaryPercent}) {
+    cohort = 'canary_traffic';
+  } else {
+    cohort = 'baseline';
   }
 
-  var bucketNum = Number(bucket);
-  var inCanaryGroup = isCanaryForced || (bucketNum < ${canaryPercent});
-  var cohort = isKillSwitched ? 'kill_switched' : (inCanaryGroup ? 'canary' : 'baseline');
-  var shouldDefer = !isKillSwitched && inCanaryGroup;
+  var shouldDefer = (cohort === 'forced_canary' || cohort === 'brazil_heuristic_canary' || cohort === 'canary_traffic');
 
   // --- TELEMETRY & STATUS STORE ---
   window.__sdTelemetry = {
@@ -84,6 +126,22 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
     totalBlockingTime: 0,
     startTime: Date.now()
   };
+
+  // Independent failure beacon (eliminates survivorship bias if GTM fails)
+  var failureBeaconUrl = window.__sdFailureBeaconUrl || '';
+  function recordFailure(vendor, err) {
+    var errObj = { vendor: vendor, error: String(err), cohort: cohort, url: window.location.href, timestamp: Date.now() };
+    window.__sdTelemetry[vendor] = 'failed';
+    window.__sdTelemetry.errors.push(errObj);
+    if (failureBeaconUrl && typeof navigator !== 'undefined' && navigator.sendBeacon) {
+      try {
+        navigator.sendBeacon(failureBeaconUrl, JSON.stringify(errObj));
+      } catch (_) {}
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('sd_vendor_failure', { detail: errObj }));
+    } catch (_) {}
+  }
 
   // Real-world RUM: Track cumulative main-thread blocking time (TBT)
   if (typeof PerformanceObserver !== 'undefined') {
@@ -146,10 +204,7 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
     s.async = true;
     s.src = 'https://connect.facebook.net/en_US/fbevents.js';
     s.onload = function() { window.__sdTelemetry.meta = 'loaded'; };
-    s.onerror = function(err) {
-      window.__sdTelemetry.meta = 'failed';
-      window.__sdTelemetry.errors.push({ vendor: 'meta', error: String(err) });
-    };
+    s.onerror = function(err) { recordFailure('meta', err); };
     document.head.appendChild(s);
   }
 
@@ -167,10 +222,7 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
       s.async = true;
       s.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(gtmId);
       s.onload = function() { window.__sdTelemetry.gtm = 'loaded'; };
-      s.onerror = function(err) {
-        window.__sdTelemetry.gtm = 'failed';
-        window.__sdTelemetry.errors.push({ vendor: 'gtm', error: String(err) });
-      };
+      s.onerror = function(err) { recordFailure('gtm', err); };
       document.head.appendChild(s);
     }
   }
@@ -185,10 +237,7 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
       s.async = true;
       s.src = 'https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=' + encodeURIComponent(ttId) + '&lib=ttq';
       s.onload = function() { window.__sdTelemetry.tiktok = 'loaded'; };
-      s.onerror = function(err) {
-        window.__sdTelemetry.tiktok = 'failed';
-        window.__sdTelemetry.errors.push({ vendor: 'tiktok', error: String(err) });
-      };
+      s.onerror = function(err) { recordFailure('tiktok', err); };
       document.head.appendChild(s);
     }
   }

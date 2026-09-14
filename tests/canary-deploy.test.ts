@@ -2,12 +2,15 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { generateCanarySnippet } from '../src/canary-deploy.js';
 
-test('Canary Snippet generates valid HTML script block with Kill Switch check and sticky bucket', () => {
+test('Canary Snippet generates valid HTML script block with Kill Switch check and safe session', () => {
   const snippet = generateCanarySnippet();
   assert.ok(snippet.includes('id="smart-deferral-canary-v021"'));
   assert.ok(snippet.includes('window.SMART_DEFERRAL_ENABLED === false'));
   assert.ok(snippet.includes('no_defer=1'));
-  assert.ok(snippet.includes('sessionStorage.getItem(\'__sdBucket\')'));
+  assert.ok(snippet.includes('safeGetSession'));
+  assert.ok(snippet.includes('safeSetSession'));
+  assert.ok(snippet.includes('brazil_heuristic_canary'));
+  assert.ok(snippet.includes('recordFailure'));
   assert.ok(snippet.includes('cohort: cohort'));
   assert.ok(snippet.includes('loadImmediately'));
   assert.ok(snippet.includes('window.__sdTelemetry'));
