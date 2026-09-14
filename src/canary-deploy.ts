@@ -123,11 +123,12 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
     tiktok: 'idle',
     errors: [],
     eventsBuffered: 0,
-    totalBlockingTime: 0,
+    longTaskBlockingMs: 0,
     startTime: Date.now()
   };
 
-  // Independent failure beacon (eliminates survivorship bias if GTM fails)
+  // Independent failure beacon (opt-in; currently INACTIVE unless window.__sdFailureBeaconUrl is explicitly configured).
+  // In-browser CustomEvent and __sdTelemetry.errors are captured locally, but external persistence requires setting this URL.
   var failureBeaconUrl = window.__sdFailureBeaconUrl || '';
   function recordFailure(vendor, err) {
     var errObj = { vendor: vendor, error: String(err), cohort: cohort, url: window.location.href, timestamp: Date.now() };
@@ -143,14 +144,14 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
     } catch (_) {}
   }
 
-  // Real-world RUM: Track cumulative main-thread blocking time (TBT)
+  // Real-world RUM: Track cumulative main-thread long-task blocking duration (NOT synthetic Lighthouse TBT)
   if (typeof PerformanceObserver !== 'undefined') {
     try {
       var po = new PerformanceObserver(function(list) {
         var entries = list.getEntries();
         for (var i = 0; i < entries.length; i++) {
           if (entries[i].duration > 50) {
-            window.__sdTelemetry.totalBlockingTime += Math.round(entries[i].duration - 50);
+            window.__sdTelemetry.longTaskBlockingMs += Math.round(entries[i].duration - 50);
           }
         }
       });
@@ -174,7 +175,7 @@ export function generateCanarySnippet(config: CanaryRuntimeConfig = {}): string 
         sd_tiktok: window.__sdTelemetry.tiktok,
         sd_errors_count: window.__sdTelemetry.errors ? window.__sdTelemetry.errors.length : 0,
         sd_events_buffered: window.__sdTelemetry.eventsBuffered || 0,
-        sd_tbt_ms: window.__sdTelemetry.totalBlockingTime || 0
+        sd_long_task_blocking_ms: window.__sdTelemetry.longTaskBlockingMs || 0
       });
     } catch (e) {}
   }

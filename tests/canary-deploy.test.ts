@@ -11,6 +11,8 @@ test('Canary Snippet generates valid HTML script block with Kill Switch check an
   assert.ok(snippet.includes('safeSetSession'));
   assert.ok(snippet.includes('brazil_heuristic_canary'));
   assert.ok(snippet.includes('recordFailure'));
+  assert.ok(snippet.includes('longTaskBlockingMs'));
+  assert.ok(snippet.includes('sd_long_task_blocking_ms'));
   assert.ok(snippet.includes('cohort: cohort'));
   assert.ok(snippet.includes('loadImmediately'));
   assert.ok(snippet.includes('window.__sdTelemetry'));
