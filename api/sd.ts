@@ -1,4 +1,4 @@
-import { resolveCohort, generateEdgeScript, type EdgeGeoContext } from '../src/edge-runtime.js';
+import { resolveCohort, generateEdgeScript, type EdgeGeoContext } from './edge-runtime.js';
 
 export const config = {
   runtime: 'edge',
