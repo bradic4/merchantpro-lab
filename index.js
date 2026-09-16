@@ -179,12 +179,12 @@ function generateScript(ctx) {
     '  var isFlushed = false;\n' +
     '  function isDeferredScript(src) {\n' +
     '    if (!src || typeof src !== "string") return false;\n' +
-    '    return src.indexOf("connect.facebook.net") !== -1 ||\n' +
+    '    return src.indexOf("fbevents.js") !== -1 ||\n' +
     '           src.indexOf("googletagmanager.com/gtm.js") !== -1 ||\n' +
     '           src.indexOf("analytics.tiktok.com") !== -1;\n' +
     '  }\n' +
     '  function getVendor(src) {\n' +
-    '    if (src.indexOf("connect.facebook.net") !== -1) return "meta";\n' +
+    '    if (src.indexOf("fbevents.js") !== -1) return "meta";\n' +
     '    if (src.indexOf("googletagmanager.com/gtm.js") !== -1) return "gtm";\n' +
     '    if (src.indexOf("analytics.tiktok.com") !== -1) return "tiktok";\n' +
     '    return "unknown";\n' +

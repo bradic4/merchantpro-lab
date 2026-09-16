@@ -247,13 +247,13 @@ export function generateEdgeScript(ctx: EdgeGeoContext, config: EdgeCanaryConfig
 
   function isDeferredScript(src) {
     if (!src || typeof src !== 'string') return false;
-    return src.indexOf('connect.facebook.net') !== -1 ||
+    return src.indexOf("fbevents.js") !== -1 ||
            src.indexOf('googletagmanager.com/gtm.js') !== -1 ||
            src.indexOf('analytics.tiktok.com') !== -1;
   }
 
   function getVendor(src) {
-    if (src.indexOf('connect.facebook.net') !== -1) return 'meta';
+    if (src.indexOf("fbevents.js") !== -1) return 'meta';
     if (src.indexOf('googletagmanager.com/gtm.js') !== -1) return 'gtm';
     if (src.indexOf('analytics.tiktok.com') !== -1) return 'tiktok';
     return 'unknown';
