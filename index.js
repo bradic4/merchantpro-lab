@@ -158,6 +158,9 @@ function getStoreMetrics(storeId, windowHours = 24) {
   const sessions = db.telemetry.filter(t => t.storeId === storeId && t.timestamp >= cutoff);
 
   let totalSessions = sessions.length;
+  let customersSessions = 0;
+  let searchCrawlers = 0;
+  let automationSessions = 0;
   let optimizedSessions = 0;
   let baselineSessions = 0;
   let crawlerSessions = 0;
@@ -165,9 +168,19 @@ function getStoreMetrics(storeId, windowHours = 24) {
   const countryBreakdown = {};
 
   for (const s of sessions) {
-    if (s.cohort && s.cohort.includes('canary')) optimizedSessions++;
-    else if (s.cohort === 'search_engine_baseline') crawlerSessions++;
-    else baselineSessions++;
+    if (s.cohort === 'search_engine_baseline') {
+      searchCrawlers++;
+      crawlerSessions++;
+    } else if (s.cohort === 'foreign_canary') {
+      automationSessions++;
+      optimizedSessions++;
+    } else if (s.cohort === 'domestic_canary') {
+      customersSessions++;
+      optimizedSessions++;
+    } else {
+      customersSessions++;
+      baselineSessions++;
+    }
 
     totalErrors += (s.errorsCount || 0);
     const c = s.country || 'unknown';
@@ -178,13 +191,22 @@ function getStoreMetrics(storeId, windowHours = 24) {
     ? Math.round(((store.optimizedBlockingMs - store.baselineBlockingMs) / store.baselineBlockingMs) * 1000) / 10
     : 0;
 
+  const lastTimestamp = sessions.length > 0
+    ? Math.max(...sessions.map(s => s.timestamp))
+    : Date.now();
+
   return {
     storeId: storeId,
+    periodHours: windowHours,
     totalSessions: totalSessions,
+    customersSessions: customersSessions,
+    searchCrawlers: searchCrawlers,
+    automationSessions: automationSessions,
     optimizedSessions: optimizedSessions,
     baselineSessions: baselineSessions,
     crawlerSessions: crawlerSessions,
     totalErrors: totalErrors,
+    lastCheckTime: new Date(lastTimestamp).toISOString(),
     baselineBlockingMs: store.baselineBlockingMs,
     optimizedBlockingMs: store.optimizedBlockingMs,
     reductionPercent: reductionPercent,
@@ -635,9 +657,12 @@ export default function handler(req, res) {
 
     const store = db.stores[storeId];
     if (!store) return sendJson(404, { error: 'Prodavnica nije pronađena.' });
-    const metrics = getStoreMetrics(storeId, 24);
 
-    return sendJson(200, { store: store, metrics: metrics });
+    const period = url.searchParams.get('period') || '24h';
+    const hours = period === '30d' ? 720 : (period === '7d' ? 168 : 24);
+    const metrics = getStoreMetrics(storeId, hours);
+
+    return sendJson(200, { store: store, metrics: metrics, period: period });
   }
 
   // --- 5. ADMIN API (ADMIN ROLE ONLY) ---

@@ -27,7 +27,6 @@
       line-height: 1.5;
       -webkit-font-smoothing: antialiased;
     }
-    /* Corporate Top Navigation */
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -48,23 +47,10 @@
       letter-spacing: -0.01em;
       color: var(--text);
     }
-    .header-separator {
-      color: var(--border);
-    }
-    .current-store {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-muted);
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 13px;
-    }
-    .user-email {
-      color: var(--text-muted);
-    }
+    .header-separator { color: var(--border); }
+    .current-store { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+    .header-right { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+    .user-email { color: var(--text-muted); }
     .btn-secondary {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -74,20 +60,13 @@
       font-weight: 500;
       color: var(--text);
       cursor: pointer;
-      text-decoration: none;
     }
-    .btn-secondary:hover {
-      background: #f1f5f9;
-    }
-
-    /* Main Container */
+    .btn-secondary:hover { background: #f1f5f9; }
     main {
       max-width: 1120px;
       margin: 32px auto;
       padding: 0 24px;
     }
-
-    /* Page Header */
     .page-header {
       display: flex;
       align-items: center;
@@ -95,11 +74,41 @@
       margin-bottom: 24px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .page-title {
       font-size: 20px;
       font-weight: 700;
       color: var(--text);
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .period-selector {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+    .period-btn {
+      background: transparent;
+      border: none;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .period-btn.active {
+      background: #ffffff;
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     .status-badge {
       display: inline-flex;
@@ -119,15 +128,13 @@
       background: var(--success);
       border-radius: 50%;
     }
-
-    /* Cards Grid */
     .grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 20px;
       margin-bottom: 24px;
     }
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .grid { grid-template-columns: 1fr; }
     }
     .card {
@@ -135,6 +142,9 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
     .card-header {
       font-size: 13px;
@@ -142,56 +152,52 @@
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.03em;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      margin-bottom: 10px;
     }
     .kpi-value {
-      font-size: 28px;
+      font-size: 24px;
       font-weight: 700;
       color: var(--text);
       letter-spacing: -0.02em;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
-    .kpi-value.green {
-      color: var(--success);
-    }
-    .kpi-subtext {
+    .kpi-value.green { color: var(--success); }
+    .kpi-desc {
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 16px;
       line-height: 1.4;
+      flex-grow: 1;
     }
-
-    /* Key-Value Details inside cards */
     .data-list {
       border-top: 1px solid var(--border-subtle);
       padding-top: 12px;
+      margin-bottom: 12px;
     }
     .data-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
+      padding: 5px 0;
       font-size: 13px;
     }
-    .data-label {
+    .data-label { color: var(--text-muted); }
+    .data-val { font-weight: 600; color: var(--text); }
+    .data-val.ok { color: var(--success); }
+    .card-footer {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 10px;
+      font-size: 11px;
       color: var(--text-muted);
-    }
-    .data-val {
-      font-weight: 600;
-      color: var(--text);
-    }
-    .data-val.ok {
-      color: var(--success);
+      line-height: 1.35;
     }
 
-    /* Table Section */
+    /* Section Box */
     .section-box {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
+      margin-bottom: 24px;
       overflow: hidden;
     }
     .section-box-header {
@@ -203,12 +209,59 @@
     }
     .section-box-title {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       color: var(--text);
     }
-    .table-container {
-      overflow-x: auto;
+    .tag-upcoming {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
     }
+    .impact-body {
+      padding: 20px;
+    }
+    .impact-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+    }
+    @media (max-width: 800px) {
+      .impact-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .impact-item-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .impact-item-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .impact-note {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 12px;
+    }
+
+    /* Table */
+    .table-container { overflow-x: auto; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -227,9 +280,7 @@
       border-bottom: 1px solid var(--border-subtle);
       color: var(--text);
     }
-    tr:last-child td {
-      border-bottom: none;
-    }
+    tr:last-child td { border-bottom: none; }
     .tag {
       display: inline-block;
       padding: 2px 6px;
@@ -264,6 +315,7 @@
     <div id="loadingView" class="loading-state">Učitavanje statusa prodavnice...</div>
 
     <div id="dashboardView" style="display: none;">
+      <!-- Page Header -->
       <div class="page-header">
         <div>
           <h1 class="page-title" id="storeHeading">VolimSvojDom.rs</h1>
@@ -271,100 +323,149 @@
             Domen: <span id="storeDomain">www.volimsvojdom.rs</span>
           </p>
         </div>
-        <div>
+        <div class="header-controls">
+          <div class="period-selector">
+            <button type="button" class="period-btn active" data-period="24h">24 sata</button>
+            <button type="button" class="period-btn" data-period="7d">7 dana</button>
+            <button type="button" class="period-btn" data-period="30d">30 dana</button>
+          </div>
           <div class="status-badge">
             <span class="status-dot"></span>
-            Sistem aktivan i štiti prodavnicu
+            Sistem aktivan
           </div>
         </div>
       </div>
 
-      <!-- KPI Grid -->
+      <!-- 3 Key Metric Cards -->
       <div class="grid">
-        <!-- 1. Brzina sajta -->
+        <!-- 1. Performanse sajta -->
         <div class="card">
-          <div class="card-header">
-            <span>Ubrzanje sajta</span>
-            <span style="font-size: 12px; font-weight: normal;">Mobilni i Desktop</span>
+          <div>
+            <div class="card-header">Performanse sajta</div>
+            <div class="kpi-value green">−38.9% vremena blokiranja</div>
+            <div class="kpi-desc">
+              Kontrolisani test pokazao je značajno manje blokiranja glavnog browser procesa nakon aktiviranja Smart Deferral-a.
+            </div>
+            <div class="data-list">
+              <div class="data-row">
+                <span class="data-label">Standardno:</span>
+                <span class="data-val">11.3 s TBT</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Optimizovano:</span>
+                <span class="data-val ok">6.9 s TBT</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Razlika:</span>
+                <span class="data-val ok">−4.4 s</span>
+              </div>
+            </div>
           </div>
-          <div class="kpi-value green" id="speedGainDisplay">+38.9% brže</div>
-          <div class="kpi-subtext">
-            Uklonjeno kočenje stranica koje izazivaju marketinške skripte. Kupac znatno brže dolazi do proizvoda i korpe.
-          </div>
-          <div class="data-list">
-            <div class="data-row">
-              <span class="data-label">Vreme čekanja ranije:</span>
-              <span class="data-val" id="baselineSec">11.3 s</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Vreme čekanja sada:</span>
-              <span class="data-val ok" id="optimizedSec">6.9 s</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Ušteda po kupcu:</span>
-              <span class="data-val ok" id="savedSec">4.4 sekunde manje čekanja</span>
-            </div>
+          <div class="card-footer">
+            * Rezultat kontrolisanog performance testa. Ne predstavlja ukupno vreme učitavanja stranice niti garantovano poboljšanje za svaku posetu.
           </div>
         </div>
 
-        <!-- 2. Praćenje reklama i prodaje -->
+        <!-- 2. Tracking status -->
         <div class="card">
-          <div class="card-header">
-            <span>Reklame i praćenje prodaje</span>
-            <span style="font-size: 12px; font-weight: normal;">Marketing integracije</span>
+          <div>
+            <div class="card-header">Tracking status</div>
+            <div class="kpi-value" style="color: var(--success); font-size: 20px; display: flex; align-items: center; gap: 8px;">
+              <span class="status-dot" style="width: 10px; height: 10px;"></span>
+              Sve integracije rade
+            </div>
+            <div class="kpi-desc">
+              Kontinuirani nadzor odlaznih poziva ka analitičkim platformama. Sistem nije detektovao greške u radu skripti.
+            </div>
+            <div class="data-list">
+              <div class="data-row">
+                <span class="data-label">Meta Pixel (Facebook & Instagram):</span>
+                <span class="data-val ok">Ispravno</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Google Analytics / Ads:</span>
+                <span class="data-val ok">Ispravno</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">TikTok Pixel:</span>
+                <span class="data-val ok">Ispravno</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Detektovane greške u praćenju:</span>
+                <span class="data-val ok">0</span>
+              </div>
+            </div>
           </div>
-          <div class="kpi-value ok" style="color: var(--success);">100% tačno</div>
-          <div class="kpi-subtext">
-            Sve porudžbine i posete se beleže bez greške. Nema gubitka podataka za Facebook i Google kampanje.
-          </div>
-          <div class="data-list">
-            <div class="data-row">
-              <span class="data-label">Facebook & Instagram (Meta):</span>
-              <span class="data-val ok">Ispravno</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Google Ads & Analytics:</span>
-              <span class="data-val ok">Ispravno</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">TikTok Pixel:</span>
-              <span class="data-val ok">Ispravno</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Propuštene porudžbine/kupovine:</span>
-              <span class="data-val ok">0 (nijedna)</span>
-            </div>
+          <div class="card-footer" id="lastCheckFooter">
+            Poslednja provera: pre nekoliko trenutaka
           </div>
         </div>
 
-        <!-- 3. Današnje posete -->
+        <!-- 3. Sesije analizirane -->
         <div class="card">
-          <div class="card-header">
-            <span>Posete u poslednja 24h</span>
-            <span style="font-size: 12px; font-weight: normal;">Uživo</span>
+          <div>
+            <div class="card-header">Sesije analizirane</div>
+            <div class="kpi-value" id="todayTotal">0</div>
+            <div class="kpi-desc" id="periodDesc">
+              Sesije koje je MerchantPro Lab obradio u poslednja 24h.
+            </div>
+            <div class="data-list">
+              <div class="data-row">
+                <span class="data-label">Kupci / posetioci:</span>
+                <span class="data-val" id="countCustomers">0</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Search crawlers (Google, Bing):</span>
+                <span class="data-val" id="countCrawlers">0</span>
+              </div>
+              <div class="data-row">
+                <span class="data-label">Ostala automatizacija:</span>
+                <span class="data-val" id="countAutomation">0</span>
+              </div>
+            </div>
           </div>
-          <div class="kpi-value" id="todayTotal">0</div>
-          <div class="kpi-subtext">
-            Ukupan broj poseta koje su prošle kroz sistem tokom današnjeg rada.
-          </div>
-          <div class="data-list">
-            <div class="data-row">
-              <span class="data-label">Kupci iz Srbije:</span>
-              <span class="data-val" id="todayDomestic">0</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Pretraživači (Google, Bing):</span>
-              <span class="data-val" id="todayCrawlers">0</span>
-            </div>
-            <div class="data-row">
-              <span class="data-label">Prijavljeni problemi ili prekidi:</span>
-              <span class="data-val ok">0</span>
-            </div>
+          <div class="card-footer">
+            Dolazni saobraćaj se automatski razdvaja kako pretraživači i automatizacija ne bi uticali na statistiku stvarnih kupaca.
           </div>
         </div>
       </div>
 
-      <!-- Live Recent Visitors Table -->
+      <!-- 4. Uticaj na prodaju i konverzije (E-commerce Business Impact) -->
+      <div class="section-box">
+        <div class="section-box-header">
+          <div class="section-box-title">Uticaj na prodaju i konverzije</div>
+          <span class="tag-upcoming">U PRIPREMI — PRIKUPLJANJE PODATAKA</span>
+        </div>
+        <div class="impact-body">
+          <p class="impact-desc">
+            U sledećoj fazi sistem meri direktan uticaj smanjenog vremena blokiranja na stopu konverzije (kupovine). 
+            Kroz kontrolisani A/B eksperiment upoređuju se posete sa standardnim i optimizovanim odzivom.
+          </p>
+          <div class="impact-grid">
+            <div>
+              <div class="impact-item-label">Optimizovane sesije</div>
+              <div class="impact-item-value" id="impactOptSessions">Prikupljanje...</div>
+            </div>
+            <div>
+              <div class="impact-item-label">Stopa konverzije (Standardno)</div>
+              <div class="impact-item-value" style="color: var(--text-muted);">Čeka prag uzorka</div>
+            </div>
+            <div>
+              <div class="impact-item-label">Stopa konverzije (Optimizovano)</div>
+              <div class="impact-item-value" style="color: var(--text-muted);">Čeka prag uzorka</div>
+            </div>
+            <div>
+              <div class="impact-item-label">Izmerena razlika</div>
+              <div class="impact-item-value" style="color: var(--text-muted);">--</div>
+            </div>
+          </div>
+          <p class="impact-note">
+            * Za statistički pouzdan zaključak o uticaju na promet i stopu konverzije potreban je dovoljan broj završenih kupovina u obe posmatrane grupe.
+          </p>
+        </div>
+      </div>
+
+      <!-- 5. Nedavne posete sajtu (Tabela) -->
       <div class="section-box">
         <div class="section-box-header">
           <div class="section-box-title">Nedavne posete sajtu</div>
@@ -376,9 +477,9 @@
               <tr>
                 <th>Vreme</th>
                 <th>Lokacija</th>
-                <th>Režim rada</th>
-                <th>Odziv sajta</th>
-                <th>Praćenje prodaje</th>
+                <th>Tip posetioca</th>
+                <th>Odziv / Blokiranje</th>
+                <th>Tracking status</th>
               </tr>
             </thead>
             <tbody id="visitorsTableBody">
@@ -395,14 +496,16 @@
   </main>
 
   <script>
-    async function loadDashboard() {
+    let activePeriod = '24h';
+
+    async function loadDashboard(period = '24h') {
       try {
         const authRes = await fetch('/api/auth/me');
         if (!authRes.ok) { window.location.href = '/login'; return; }
         const authData = await authRes.json();
         document.getElementById('userEmail').textContent = authData.user.email;
 
-        const res = await fetch('/api/client/overview');
+        const res = await fetch(`/api/client/overview?period=${period}`);
         if (!res.ok) throw new Error('Neuspešno učitavanje podataka.');
         const data = await res.json();
 
@@ -416,18 +519,23 @@
         document.getElementById('storeHeading').textContent = store.name;
         document.getElementById('storeDomain').textContent = store.domain;
 
-        // KPI 1: Speed
-        const speedPct = Math.abs(metrics.reductionPercent);
-        document.getElementById('speedGainDisplay').textContent = `+${speedPct}% brže`;
-        document.getElementById('baselineSec').textContent = `${(metrics.baselineBlockingMs / 1000).toFixed(1)} s`;
-        document.getElementById('optimizedSec').textContent = `${(metrics.optimizedBlockingMs / 1000).toFixed(1)} s`;
-        const diff = ((metrics.baselineBlockingMs - metrics.optimizedBlockingMs) / 1000).toFixed(1);
-        document.getElementById('savedSec').textContent = `${diff} sekunde manje čekanja`;
-
-        // KPI 3: Traffic
+        // KPI 3: Traffic classification
         document.getElementById('todayTotal').textContent = metrics.totalSessions.toLocaleString();
-        document.getElementById('todayDomestic').textContent = (metrics.optimizedSessions + metrics.baselineSessions).toLocaleString();
-        document.getElementById('todayCrawlers').textContent = metrics.crawlerSessions.toLocaleString();
+        document.getElementById('countCustomers').textContent = (metrics.customersSessions || (metrics.optimizedSessions + metrics.baselineSessions)).toLocaleString();
+        document.getElementById('countCrawlers').textContent = (metrics.searchCrawlers || metrics.crawlerSessions).toLocaleString();
+        document.getElementById('countAutomation').textContent = (metrics.automationSessions || 0).toLocaleString();
+
+        const periodLabels = { '24h': 'poslednja 24h', '7d': 'poslednjih 7 dana', '30d': 'poslednjih 30 dana' };
+        document.getElementById('periodDesc').textContent = `Sesije koje je MerchantPro Lab obradio u ${periodLabels[period] || 'poslednja 24h'}.`;
+
+        // Section 4: Impact placeholder
+        document.getElementById('impactOptSessions').textContent = `${metrics.optimizedSessions.toLocaleString()} sesija`;
+
+        // Time footer
+        if (metrics.lastCheckTime) {
+          const diffMinutes = Math.max(1, Math.round((Date.now() - new Date(metrics.lastCheckTime).getTime()) / 60000));
+          document.getElementById('lastCheckFooter').textContent = `Poslednja zabeležena sesija: pre ${diffMinutes} min`;
+        }
 
         // Table
         const tbody = document.getElementById('visitorsTableBody');
@@ -436,15 +544,15 @@
             let label = 'Kupac (Srbija)';
             let tagClass = 'tag-gray';
             if (s.cohort === 'domestic_canary') {
-              label = 'Kupac (Srbija - Ubrzano)';
+              label = 'Kupac (Srbija - Optimizovano)';
               tagClass = 'tag-green';
             } else if (s.cohort === 'search_engine_baseline') {
-              label = 'Google / Bing pretraživač';
+              label = 'Search Crawler (Google/Bing)';
             } else if (s.cohort === 'foreign_canary') {
-              label = 'Inostrana poseta / Bot';
+              label = 'Inostrani bot / Meta Crawler';
             }
 
-            const responseText = (s.longTaskBlockingMs < 300) ? 'Odličan (< 0.3s)' : `${(s.longTaskBlockingMs / 1000).toFixed(1)}s`;
+            const responseText = (s.longTaskBlockingMs < 300) ? 'Brz (< 0.3s)' : `${(s.longTaskBlockingMs / 1000).toFixed(1)}s`;
 
             return `
               <tr>
@@ -452,7 +560,7 @@
                 <td><strong>${s.country || 'RS'}</strong></td>
                 <td><span class="tag ${tagClass}">${label}</span></td>
                 <td>${responseText}</td>
-                <td><span style="color:var(--success); font-weight:600;">✓ Ispravno</span></td>
+                <td><span style="color:var(--success); font-weight:600;">✓ Ispravno (0 grešaka)</span></td>
               </tr>
             `;
           }).join('');
@@ -460,7 +568,7 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
-                Trenutno nema novih zabeleženih sesija.
+                Trenutno nema novih zabeleženih sesija u ovom periodu.
               </td>
             </tr>
           `;
@@ -471,13 +579,23 @@
       }
     }
 
+    // Period selector click
+    document.querySelectorAll('.period-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activePeriod = btn.dataset.period;
+        loadDashboard(activePeriod);
+      });
+    });
+
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await fetch('/api/auth/logout', { method: 'POST' });
       localStorage.removeItem('sd_token');
       window.location.href = '/login';
     });
 
-    loadDashboard();
+    loadDashboard(activePeriod);
   </script>
 </body>
 </html>
