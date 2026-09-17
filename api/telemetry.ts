@@ -1,8 +1,11 @@
+import { shadowWrite } from '../lib/telemetry.js';
+
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(request: Request) {
+export function createTelemetryHandler(persist = shadowWrite) {
+return async function handler(request: Request) {
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -37,6 +40,11 @@ export default async function handler(request: Request) {
       ...data,
     }));
 
+    // Additive shadow write. Preserve the original log and all production responses.
+    // Separate context prevents payload fields from overwriting trusted receipt metadata.
+    try { await persist(data, { receivedAt: Date.now(), edgeCountry: country }); }
+    catch { /* Fail open even if an injected adapter fails unexpectedly. */ }
+
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: {
@@ -54,3 +62,6 @@ export default async function handler(request: Request) {
     });
   }
 }
+}
+
+export default createTelemetryHandler();

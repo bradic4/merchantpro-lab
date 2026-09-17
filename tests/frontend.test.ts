@@ -9,6 +9,19 @@ const executablePath = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome
 test('frontend preserves data boundaries, period selection, filtering and confirmed configuration writes', { skip: !executablePath }, async t => {
   const store = { id: 'store', name: 'Test prodavnica', domain: 'test.example', platform: 'merchantpro', status: 'live', killSwitch: false, canaryPercent: 1, vendors: { meta: true, gtm: true, tiktok: false } };
   const metrics: any = { totalSessions: 0, totalErrors: 0, recentSessions: [], countryBreakdown: {}, searchCrawlers: 0, baselineBlockingMs: 11300, optimizedBlockingMs: 6900 };
+  // Controlled API fixtures only. SQL aggregation is separately tested against Postgres.
+  const view = () => {
+    const rows = metrics.recentSessions;
+    const latest = rows[0];
+    return { source: { kind: 'postgres', available: true }, totalSessions: null, storeStatus: null,
+      summaryReports: rows.length, recordCount: rows.length, errorReports: 0,
+      lastTelemetryAt: latest?.timestamp ?? null, performanceSampleCount: rows.length,
+      performanceMedian: rows.length ? 120 : null, performanceP75: rows.length >= 20 ? 180 : null,
+      performanceHistory: rows.length ? [{ timestamp: latest.timestamp, sampleSize: rows.length, median: 120, p75: rows.length >= 20 ? 180 : null }] : [],
+      vendors: Object.fromEntries(['meta', 'gtm', 'tiktok'].map(k => [k, { latestState: latest?.[k], lastObservedAt: latest?.timestamp, fresh: latest && Date.now() - latest.timestamp < 86400000 }])),
+      recentSessions: rows.map((s: any) => ({ ...s, type: 'session_summary', pageHost: 'test.example', pagePath: '/product/one' })),
+    };
+  };
   const writes: any[] = [];
   let role = 'CLIENT', fail = false;
   const requests: string[] = [];
@@ -26,8 +39,8 @@ test('frontend preserves data boundaries, period selection, filtering and confir
       res.end(JSON.stringify({ ok: true, store })); return;
     }
     if (fail) { res.statusCode = 503; res.end('{}'); return; }
-    if (url.pathname === '/api/admin/stores') { res.end(JSON.stringify({ stores: [{ ...store, totalSessions: metrics.totalSessions, totalErrors: metrics.totalErrors }] })); return; }
-    res.end(JSON.stringify({ store, metrics }));
+    if (url.pathname === '/api/admin/stores') { res.end(JSON.stringify({ stores: [{ ...store, metrics: view() }] })); return; }
+    res.end(JSON.stringify({ store, metrics: view() }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => server.close());
@@ -44,7 +57,7 @@ test('frontend preserves data boundaries, period selection, filtering and confir
   metrics.totalSessions = 25;
   metrics.recentSessions = Array.from({ length: 25 }, (_, i) => ({ timestamp: Date.now() - i * 60000, country: 'US', cohort: 'foreign_canary', longTaskBlockingMs: i * 10, errorsCount: 0, eventsBuffered: 0, meta: 'loaded', gtm: 'loaded', tiktok: 'loaded', url: 'https://test.example/product/one' }));
   await page.click('#refresh'); await page.waitForSelector('.chart');
-  assert.match(await page.$eval('#detail', el => el.textContent!), /Režim nije dostupan/);
+  assert.match(await page.$eval('#detail', el => el.textContent!), /Control\/Optimized: Nema podataka/);
   assert.doesNotMatch(await page.$eval('#sessionTable', el => el.textContent!), /Kupac|Meta crawler/);
   assert.equal(await page.$eval('.path', el => el.textContent), '/product/one');
   assert.ok(await page.$('.status.ok'), 'Explicit recent loaded states support script health');

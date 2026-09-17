@@ -14,22 +14,29 @@
   const panel = (title, body, subtitle = '') => `<section class="panel"><div class="panelhead"><h2>${title}</h2><span class="muted">${subtitle}</span></div>${body}</section>`;
   const table = (headers, rows, empty = 'Nema podataka za izabrani period.') => `<div class="tablewrap"><table><thead><tr>${headers.map(x => `<th scope="col">${x}</th>`).join('')}</tr></thead><tbody>${rows || `<tr><td colspan="${headers.length}" class="empty">${empty}</td></tr>`}</tbody></table></div>`;
   const sessions = () => state.data?.metrics?.recentSessions || [];
-  // The API lastCheckTime falls back to Date.now() for empty datasets; never use it as evidence.
-  const lastSeen = list => list.filter(s => numeric(s.timestamp)).reduce((last, s) => Math.max(last, s.timestamp), 0) || null;
-  const fresh = s => numeric(s.timestamp) && Date.now() - s.timestamp >= 0 && Date.now() - s.timestamp <= 86400000;
-  function vendorHealth(list, key) {
-    const observed = list.filter(fresh).map(s => s[key]);
-    if (observed.includes('failed')) return ['Greška', 'error'];
-    if (observed.some(x => x === 'loading' || x === 'deferred')) return ['Upozorenje', 'warning'];
-    if (observed.length && observed.every(x => x === 'loaded')) return ['Ispravno', 'ok'];
+  function vendorHealth(metrics, key) {
+    const observed = metrics?.vendors?.[key];
+    if (!observed?.fresh) return ['Nema podataka', ''];
+    if (observed.latestState === 'failed') return ['Greška', 'error'];
+    if (['loading', 'deferred'].includes(observed.latestState)) return ['Upozorenje', 'warning'];
+    if (observed.latestState === 'loaded') return ['Ispravno', 'ok'];
     return ['Nema podataka', ''];
   }
-  function health(list) {
-    const states = Object.keys(vendors).map(k => vendorHealth(list, k));
+  function health(metrics) {
+    const states = Object.keys(vendors).map(k => vendorHealth(metrics, k));
     if (states.some(x => x[1] === 'error')) return ['Greška', 'error'];
     if (states.some(x => x[1] === 'warning')) return ['Upozorenje', 'warning'];
     if (states.every(x => x[1] === 'ok')) return ['Ispravno', 'ok'];
     return ['Nema podataka', ''];
+  }
+  function storeActivity(metrics) {
+    return metrics?.storeStatus === 'active' ? 'Aktivno' : metrics?.storeStatus === 'inactive' ? 'Neaktivno' : 'Nema podataka';
+  }
+  function persistedMetrics(metrics) {
+    return metrics?.source?.available === true && metrics.source.kind === 'postgres' ? metrics : {
+      source: { available: false }, recentSessions: [], performanceHistory: [], performanceGroups: [],
+      missing: metrics?.missing || ['durable_telemetry_source']
+    };
   }
   function trackingCell(s) {
     if (Object.keys(vendors).some(k => s[k] === 'failed')) return status('Greška', 'error');
@@ -39,15 +46,7 @@
     return status('Nema podataka');
   }
   function classification(s) {
-    if (s.classification) return s.classification;
-    return s.cohort === 'search_engine_baseline' ? 'Search crawler' : 'Nepoznato';
-  }
-  function pathLink(value) {
-    try {
-      const url = new URL(value);
-      if (!['https:', 'http:'].includes(url.protocol)) return '—';
-      return `<a class="path" href="${esc(url.href)}" title="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(url.pathname)}</a>`;
-    } catch { return '—'; }
+    return s.type === 'session_summary' ? 'Sažetak' : s.type === 'error' ? 'Greška' : 'Nema podataka';
   }
   async function api(url, options) {
     const response = await fetch(url, options);
@@ -81,56 +80,56 @@
     };
   }
   function lab() {
-    const m = state.data.metrics;
-    const valid = numeric(m.baselineBlockingMs) && numeric(m.optimizedBlockingMs);
-    const seconds = n => (n / 1000).toLocaleString('sr-Latn-RS', { maximumFractionDigits: 1 });
-    const signed = n => `${n > 0 ? '+' : ''}${n.toLocaleString('sr-Latn-RS', { maximumFractionDigits: 1 })}`;
-    return `<section><div class="eyebrow">LAB / KONTROLISANI TEST</div><h2>Performanse</h2><p class="muted">Kontrolisani test</p><dl class="rows">${row('Standardno', valid ? `${seconds(m.baselineBlockingMs)} s TBT` : '—')}${row('Smart Deferral', valid ? `${seconds(m.optimizedBlockingMs)} s TBT` : '—')}${row('Razlika', valid ? `${signed((m.optimizedBlockingMs - m.baselineBlockingMs) / 1000)} s` : '—')}${row('Promena', valid && m.baselineBlockingMs > 0 ? `${signed((m.optimizedBlockingMs / m.baselineBlockingMs - 1) * 100)}%` : '—')}</dl><p class="note">Rezultat kontrolisanog performance testa.</p><details class="note"><summary>Šta meri TBT?</summary><p>Total Blocking Time meri vreme tokom kojeg je glavni browser thread blokiran dugim zadacima.</p><p>API ne dostavlja datum ni identifikator testa.</p></details></section>`;
+    return '<section><div class="eyebrow">LAB / KONTROLISANI TEST</div><h2>Performanse</h2><p class="empty">Nema podataka</p><p class="note">Nema sačuvanog rezultata kontrolisanog testa sa datumom i izvorom.</p></section>';
   }
   function tracking() {
-    const list = sessions();
-    return `<section><div class="eyebrow">PRODUKCIONA TELEMETRIJA</div><div class="controls"><h2>Tracking</h2>${status(...health(list))}</div><dl class="rows">${Object.entries(vendors).map(([key, title]) => row(title, status(...vendorHealth(list, key)))).join('')}${row('Detektovane tracking greške', 'Nema podataka')}${row('Poslednja provera', esc(date(lastSeen(list))))}</dl><p class="note">Status učitavanja skripti u dostupnom uzorku iz poslednja 24h. Ne potvrđuje isporuku događaja ili porudžbina. Odložene skripte zahtevaju proveru.</p></section>`;
+    const m = state.data.metrics;
+    const vendorRows = Object.entries(vendors).map(([key, title]) => {
+      const vendor = m.vendors?.[key];
+      return row(title, status(...vendorHealth(m, key))) + row('Poslednje stanje', esc(vendor?.latestState || 'Nema podataka')) + row('Vreme opažanja', esc(date(vendor?.lastObservedAt)));
+    }).join('');
+    const counts = Object.entries(vendors).map(([key, title]) => '<tr><td>' + esc(title) + '</td><td>' + esc(Object.entries(m.vendors?.[key]?.states || {}).map(([s, n]) => s + ': ' + number(n)).join(' · ') || 'Nema podataka') + '</td></tr>').join('');
+    return '<section><div class="eyebrow">SAČUVANA TELEMETRIJA</div><div class="controls"><h2>Tracking</h2>' + status(...health(m)) + '</div><dl class="rows">' + vendorRows + row('Detektovane tracking greške', numeric(m.trackingErrors) ? number(m.trackingErrors) : 'Nema podataka') + '</dl><details class="note"><summary>Stanja u izabranom periodu</summary>' + table(['Vendor', 'Broj zapisa po stanju'], counts) + '</details><p class="note">Poslednje sačuvano stanje skripte; status važi za opažanja iz poslednja 24h. Učitana skripta ne potvrđuje isporuku događaja.</p></section>';
   }
   function traffic() {
     const m = state.data.metrics;
-    return `<section><div class="eyebrow">${state.period} / PRIMLJENI ZAPISI</div><h2>Analizirane sesije</h2><dl class="rows">${row('Ukupno', number(m.totalSessions))}${row('Srbija', number(m.countryBreakdown?.RS ?? (m.countryBreakdown ? 0 : null)))}${row('Pretraživači', number(m.searchCrawlers))}${row('Ostalo / nepoznato', 'Nema podataka')}${row('Detektovane greške', number(m.totalErrors))}</dl><p class="note">Srbija je geografski presek; pretraživači su klasifikacija. Redovi nisu zbirne kategorije. API broji telemetry zapise, bez potvrđene deduplikacije sesija.</p></section>`;
-  }
-  function percentile(values, p) {
-    const sorted = [...values].sort((a, b) => a - b), index = (sorted.length - 1) * p;
-    return sorted.length ? sorted[Math.floor(index)] + (sorted[Math.ceil(index)] - sorted[Math.floor(index)]) * (index % 1) : null;
+    const metric = n => numeric(n) ? number(n) : 'Nema podataka';
+    const breakdown = (title, values) => '<details class="note"><summary>' + title + ' · zapisi</summary><dl class="rows">' + (values ? Object.entries(values).map(([key, n]) => row(key === 'unknown' ? 'Nepoznato' : key, number(n))).join('') : 'Nema podataka') + '</dl></details>';
+    return '<section><div class="eyebrow">' + state.period + ' / SAČUVANA TELEMETRIJA</div><h2>Analizirane sesije</h2><dl class="rows">' + row('Ukupno sesija', metric(m.totalSessions)) + row('Primljeni sažeci', metric(m.summaryReports)) + row('Sačuvani zapisi u periodu', metric(m.recordCount)) + row('Primljeni izveštaji o greškama', metric(m.errorReports)) + row('Greške prijavljene u sažecima', metric(m.summaryReportedErrors)) + '</dl>' + breakdown('Države', m.countryBreakdown) + breakdown('Tip zapisa', m.classificationBreakdown) + '<p class="note">' + (m.periodComplete ? 'Potpunost perioda potvrđena izvorom.' : 'Potpunost perioda nije potvrđena. Zapisi nisu broj jedinstvenih sesija.') + '</p><p class="note">Kraj perioda: ' + esc(date(m.asOf)) + '</p></section>';
   }
   function history() {
-    const records = sessions().filter(s => numeric(s.longTaskBlockingMs) && numeric(s.timestamp));
-    if (!records.length) return panel('Performanse kroz vreme', '<div class="empty">Nema produkcionih merenja longTaskBlockingMs za izabrani period.</div>', `${state.period} · Produkciona telemetrija`);
-    // Do not infer optimization from cohort: kill switch and vendor settings can change actual mode.
-    const groups = [ ['Kontrolna grupa', records.filter(s => s.mode === 'immediate_fallback'), '#3e4853'], ['Optimizovana grupa', records.filter(s => s.mode === 'smart_deferral_canary'), '#587d9a'], ['Režim nije dostupan', records.filter(s => !['immediate_fallback', 'smart_deferral_canary'].includes(s.mode)), '#868b91'] ].filter(g => g[1].length);
-    const start = Math.min(...records.map(s => s.timestamp)), end = Math.max(...records.map(s => s.timestamp));
-    const bucketSize = Math.max(3600000, (end - start + 1) / 12);
-    const series = groups.map(([name, values, color]) => {
-      const buckets = new Map();
-      values.forEach(s => { const k = Math.floor((s.timestamp - start) / bucketSize); if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(s.longTaskBlockingMs); });
-      return { name, color, values, points: [...buckets].sort((a, b) => a[0] - b[0]).map(([k, v]) => ({ time: start + k * bucketSize, median: percentile(v, .5), p75: v.length >= 20 ? percentile(v, .75) : null, n: v.length })) };
-    });
-    const max = Math.max(1, ...series.flatMap(g => g.points.map(p => Math.max(p.median, p.p75 ?? 0))));
-    const x = t => 60 + (t - start) / Math.max(end - start, bucketSize) * 820;
+    const m = state.data.metrics;
+    const buckets = (m.performanceHistory || []).map(b => ({ ...b, mode: 'reported' }));
+    if (!buckets.length) return panel('Performanse kroz vreme', '<div class="empty">Nema podataka</div><p class="note body">Nema sačuvanih sažetaka sa prijavljenim longTaskBlockingMs.</p>', state.period + ' · Sačuvana telemetrija');
+    const names = { reported: 'Prijavljene vrednosti' };
+    const colors = { reported: '#3e4853', unknown: '#868b91' };
+    const groups = [{ mode: 'reported', sampleSize: m.performanceSampleCount, median: m.performanceMedian, p75: m.performanceP75 }];
+    const start = Math.min(...buckets.map(b => b.timestamp)), end = Math.max(...buckets.map(b => b.timestamp));
+    const max = Math.max(1, ...buckets.map(b => Math.max(b.median, b.p75 ?? 0)));
+    const x = t => 60 + (t - start) / Math.max(end - start, 3600000) * 820;
     const y = v => 140 - v / max * 115;
-    const chart = `<svg class="chart" viewBox="0 0 960 185" role="img" aria-label="Medijana longTaskBlockingMs po vremenskim intervalima. Vrednosti su dostupne u tabeli ispod."><line x1="60" y1="140" x2="910" y2="140" stroke="#dce0e3"/><line x1="60" y1="25" x2="910" y2="25" stroke="#edf0f2"/><text x="0" y="29">${esc(number(max))} ms</text><text x="20" y="144">0</text>${series.map(g => `<polyline fill="none" stroke="${g.color}" stroke-width="2" points="${g.points.map(p => `${x(p.time)},${y(p.median)}`).join(' ')}"/>${g.points.map(p => `<circle cx="${x(p.time)}" cy="${y(p.median)}" r="3" fill="${g.color}"><title>${esc(date(p.time))}: ${esc(number(p.median))} ms · n=${p.n}</title></circle>${p.p75 === null ? '' : `<circle cx="${x(p.time)}" cy="${y(p.p75)}" r="3" fill="white" stroke="${g.color}"><title>p75: ${esc(number(p.p75))} ms</title></circle>`}`).join('')}`).join('')}<text x="60" y="173">${esc(date(start))}</text><text x="910" y="173" text-anchor="end">${esc(date(end))}</text></svg>`;
-    const stats = series.map(g => `<tr><td>${esc(g.name)}</td><td>${g.values.length}</td><td>${number(percentile(g.values.map(s => s.longTaskBlockingMs), .5))} ms</td><td>${g.values.length >= 20 ? `${number(percentile(g.values.map(s => s.longTaskBlockingMs), .75))} ms` : 'Nedovoljan uzorak'}</td></tr>`).join('');
-    return panel('Performanse kroz vreme', `<div class="body"><div class="eyebrow">PRODUKCIONA TELEMETRIJA / longTaskBlockingMs</div>${chart}<div class="legend">${series.map(g => `<span style="color:${g.color}">${esc(g.name)}</span>`).join('')}<span>Puna tačka: medijana · Prazna tačka: p75</span></div><p class="note">Dostupno ${records.length} merenja od ${number(state.data.metrics.totalSessions)} zapisa u periodu. API vraća najviše 50 poslednjih zapisa. p75 se prikazuje za n ≥ 20 (prag prikaza, bez tvrdnje o statističkoj pouzdanosti). Režim se ne izvodi iz kohorte.</p></div>${table(['Grupa', 'Uzorak', 'Medijana', 'p75'], stats)}<details class="body"><summary>Podaci po intervalu</summary>${table(['Interval', 'Grupa', 'Uzorak', 'Medijana', 'p75'], series.flatMap(g => g.points.map(p => `<tr><td>${esc(date(p.time))}</td><td>${esc(g.name)}</td><td>${p.n}</td><td>${number(p.median)} ms</td><td>${p.p75 === null ? '—' : `${number(p.p75)} ms`}</td></tr>`)).join(''))}</details>`, esc(state.period));
+    const lines = groups.map(g => {
+      const points = buckets.filter(b => b.mode === g.mode);
+      const color = colors[g.mode] || colors.unknown;
+      return '<polyline fill="none" stroke="' + color + '" stroke-width="2" points="' + points.map(p => x(p.timestamp) + ',' + y(p.median)).join(' ') + '"/>' + points.map(p => '<circle cx="' + x(p.timestamp) + '" cy="' + y(p.median) + '" r="3" fill="' + color + '"><title>' + esc(date(p.timestamp)) + ': ' + number(p.median) + ' ms · n=' + p.sampleSize + '</title></circle>' + (numeric(p.p75) ? '<circle cx="' + x(p.timestamp) + '" cy="' + y(p.p75) + '" r="3" fill="white" stroke="' + color + '"><title>p75: ' + number(p.p75) + ' ms</title></circle>' : '')).join('');
+    }).join('');
+    const chart = '<svg class="chart" viewBox="0 0 960 185" role="img" aria-label="longTaskBlockingMs; podaci su dostupni u tabeli"><line x1="60" y1="140" x2="910" y2="140" stroke="#dce0e3"/><text x="0" y="29">' + number(max) + ' ms</text><text x="20" y="144">0</text>' + lines + '<text x="60" y="173">' + esc(date(start)) + '</text><text x="910" y="173" text-anchor="end">' + esc(date(end)) + '</text></svg>';
+    const summary = table(['Grupa', 'Uzorak', 'Medijana', 'p75'], groups.map(g => '<tr><td>' + esc(names[g.mode] || g.mode) + '</td><td>' + number(g.sampleSize) + '</td><td>' + number(g.median) + ' ms</td><td>' + (numeric(g.p75) ? number(g.p75) + ' ms' : 'Nedovoljan uzorak') + '</td></tr>').join(''));
+    const rows = table(['Interval', 'Grupa', 'Uzorak', 'Medijana', 'p75'], buckets.map(b => '<tr><td>' + esc(date(b.timestamp)) + '</td><td>' + esc(names[b.mode] || b.mode) + '</td><td>' + number(b.sampleSize) + '</td><td>' + number(b.median) + ' ms</td><td>' + (numeric(b.p75) ? number(b.p75) + ' ms' : 'Nedovoljan uzorak') + '</td></tr>').join(''));
+    return panel('Performanse kroz vreme', '<div class="body"><div class="eyebrow">PRODUKCIONA TELEMETRIJA / longTaskBlockingMs</div>' + chart + '<div class="legend">' + groups.map(g => '<span style="color:' + (colors[g.mode] || colors.unknown) + '">' + esc(names[g.mode] || g.mode) + '</span>').join('') + '</div><p class="note">' + number(m.performanceSampleCount) + ' merenja iz sačuvanih sažetaka sesija. ' + (m.periodComplete ? 'Potpunost perioda potvrđena.' : 'Potpunost perioda nije potvrđena.') + ' Medijana: puna tačka; p75: prazna tačka, n ≥ 20. Prijavljena nula ne potvrđuje podršku merenja. Control/Optimized: Nema podataka.</p></div>' + summary + '<details class="body"><summary>Podaci po intervalu</summary>' + rows + '</details>', esc(state.period));
   }
-  // Reserved schema: {control, optimized}: {sessions, orders, revenue, conversionRate, revenuePerSession}, observedDifference.
   function businessImpact() {
     return panel('Poslovni uticaj', '<div class="empty">Još nema dovoljno podataka za analizu poslovnog uticaja.</div>');
   }
   function sessionRows(list, admin) {
-    return list.map(s => `<tr><td class="nowrap">${esc(date(s.timestamp))}</td><td>${esc(s.country || 'Nepoznato')}</td><td>${esc(classification(s))}</td>${admin ? `<td><code>${esc(s.cohort || '—')}</code></td>` : ''}<td>${esc(s.mode || 'Nema podataka')}</td><td class="nowrap">${numeric(s.longTaskBlockingMs) ? `${number(s.longTaskBlockingMs)} ms` : '—'}</td>${admin ? `<td>${number(s.eventsBuffered)}</td>` : ''}<td>${trackingCell(s)}</td><td>${numeric(s.errorsCount) && s.errorsCount > 0 ? status(number(s.errorsCount), 'error') : number(s.errorsCount)}</td><td>${pathLink(s.url)}</td></tr>`).join('');
+    return list.map(s => `<tr><td class="nowrap">${esc(date(s.timestamp))}</td><td>${esc(s.country || 'Nepoznato')}</td><td>${esc(classification(s))}</td>${admin ? `<td><code>${esc(s.cohort || '—')}</code></td>` : ''}<td>${esc(s.mode || 'Nema podataka')}</td><td class="nowrap">${numeric(s.longTaskBlockingMs) ? `${number(s.longTaskBlockingMs)} ms` : '—'}</td>${admin ? `<td>${number(s.eventsBuffered)}</td>` : ''}<td>${trackingCell(s)}</td><td>${s.type === 'error' ? status(s.errorVendor || 'Prijavljena greška', 'error') : numeric(s.errorsCount) && (s.type === 'error' || s.errorsCount > 0) ? status(number(s.errorsCount), 'error') : number(s.errorsCount)}</td><td><span class="path" title="${esc(s.pageHost || '')}">${esc(s.pagePath || 'Nema podataka')}</span></td></tr>`).join('');
   }
   function telemetry(admin = false, errorsOnly = false) {
     const list = sessions();
     const options = key => [...new Set(list.map(s => s[key]).filter(Boolean))].sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
     const filters = admin ? `<div class="filters"><label>Država <select id="country"><option value="">Sve</option>${options('country')}</select></label><label>Cohort <select id="cohort"><option value="">Sve</option>${options('cohort')}</select></label><label>Mode <select id="mode"><option value="">Svi</option>${options('mode')}</select></label><label>Vendor state <select id="vendorState"><option value="">Svi</option>${[...new Set(list.flatMap(s => Object.keys(vendors).map(k => s[k])).filter(Boolean))].sort().map(x => `<option>${esc(x)}</option>`).join('')}</select></label><label><input id="errorsOnly" type="checkbox" ${errorsOnly ? 'checked' : ''}>Samo greške</label></div>` : '';
-    const headers = admin ? ['Vreme', 'Država', 'Klasifikacija', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'] : ['Vreme', 'Lokacija', 'Tip', 'Režim', 'Blokiranje', 'Tracking', 'Greške', 'Stranica'];
-    return panel(errorsOnly ? 'Greške' : admin ? 'Live telemetry' : 'Nedavne sesije', `${filters}<div id="sessionTable">${table(headers, sessionRows(list.filter(s => !errorsOnly || s.errorsCount > 0), admin))}</div><p class="note body">Poslednjih ${list.length} dostupnih zapisa · ${state.period}. Osvežavanje na zahtev.</p>`, '<button id="refresh">Osveži</button>');
+    const headers = admin ? ['Vreme', 'Država', 'Tip zapisa', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'] : ['Vreme', 'Lokacija', 'Tip', 'Režim', 'Blokiranje', 'Tracking', 'Greške', 'Stranica'];
+    return panel(errorsOnly ? 'Greške' : admin ? 'Live telemetry' : 'Nedavni telemetry zapisi', `${filters}<div id="sessionTable">${table(headers, sessionRows(list.filter(s => !errorsOnly || (s.type === 'error' || s.errorsCount > 0)), admin))}</div><p class="note body">Poslednjih ${list.length} sačuvanih zapisa · ${state.period}. Osvežavanje na zahtev.</p>`, '<button id="refresh">Osveži</button>');
   }
   function configuration() {
     const s = state.data.store;
@@ -139,8 +138,9 @@
   function renderDetail() {
     const admin = page === 'admin', s = state.data.store;
     const tabs = admin ? [['overview', 'Pregled'], ['sessions', 'Telemetry'], ['performance', 'Performance'], ['tracking', 'Tracking'], ['config', 'Konfiguracija'], ['errors', 'Greške']] : [['overview', 'Pregled'], ['performance', 'Performanse'], ['tracking', 'Tracking'], ['sessions', 'Sesije']];
-    const activity = s.status === 'live' && s.killSwitch === false ? 'Aktivno' : s.status === 'pilot' ? 'Pilot' : 'Neaktivno';
-    const header = `<div class="pagehead"><div><h1>${esc(s.name)}</h1><div class="muted">${esc(s.domain)}</div><div class="meta"><span>Platforma: ${esc(s.platform || 'Nema podataka')}</span><span>Runtime: ${esc(s.runtimeVersion || 'Nema podataka')}</span><span>Poslednji podaci: ${esc(date(lastSeen(sessions())))}</span></div></div><div class="controls">${status(admin && s.status === 'live' && !s.killSwitch ? 'Live' : activity)}${!admin ? `<div class="period" aria-label="Period">${['24h', '7d', '30d'].map(p => `<button data-period="${p}" aria-pressed="${state.period === p}">${p}</button>`).join('')}</div>` : '<span class="muted">24h</span>'}</div></div>`;
+    const m = state.data.metrics;
+    const activity = storeActivity(m);
+    const header = `<div class="pagehead"><div><h1>${esc(s.name)}</h1><div class="muted">${esc(s.domain)}</div><div class="meta"><span>Platforma: ${esc(s.platform || 'Nema podataka')}</span><span>Runtime: ${esc(m.runtimeVersion || 'Nema podataka')}</span><span>Poslednji podaci: ${esc(date(m.lastTelemetryAt))}</span></div></div><div class="controls">${status(activity)}${true ? `<div class="period" aria-label="Period">${['24h', '7d', '30d'].map(p => `<button data-period="${p}" aria-pressed="${state.period === p}">${p}</button>`).join('')}</div>` : '<span class="muted">24h</span>'}</div></div>`;
     let body = '';
     if (state.tab === 'overview') body = `<div class="summary">${lab()}${tracking()}${traffic()}</div>${history()}${businessImpact()}${telemetry(admin)}`;
     if (state.tab === 'performance') body = `<div class="panel body">${lab()}</div>${history()}${businessImpact()}`;
@@ -159,24 +159,26 @@
     if (!document.getElementById('country')) return;
     ids.forEach(id => document.getElementById(id).onchange = () => {
       const value = k => document.getElementById(k).value;
-      const list = sessions().filter(s => ['country', 'cohort', 'mode'].every(k => !value(k) || s[k] === value(k)) && (!value('vendorState') || Object.keys(vendors).some(k => s[k] === value('vendorState'))) && (!document.getElementById('errorsOnly').checked || s.errorsCount > 0));
-      document.getElementById('sessionTable').innerHTML = table(['Vreme', 'Država', 'Klasifikacija', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'], sessionRows(list, true), 'Nema zapisa za izabrane filtere.');
+      const list = sessions().filter(s => ['country', 'cohort', 'mode'].every(k => !value(k) || s[k] === value(k)) && (!value('vendorState') || Object.keys(vendors).some(k => s[k] === value('vendorState'))) && (!document.getElementById('errorsOnly').checked || (s.type === 'error' || s.errorsCount > 0)));
+      document.getElementById('sessionTable').innerHTML = table(['Vreme', 'Država', 'Tip zapisa', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'], sessionRows(list, true), 'Nema zapisa za izabrane filtere.');
     });
   }
   function renderStores() {
-    document.getElementById('stores').innerHTML = panel('Prodavnice', table(['Prodavnica', 'Platforma', 'Status', 'Rollout', 'Sesije 24h', 'Greške 24h', 'Tracking', 'Poslednji podaci', 'Runtime', 'Akcija'], state.stores.map(s => `<tr><td><strong>${esc(s.name)}</strong><div class="muted">${esc(s.domain)}</div></td><td>${esc(s.platform)}</td><td>${status(s.killSwitch ? 'Neaktivno' : s.status === 'live' ? 'Live' : s.status === 'pilot' ? 'Pilot' : s.status || 'Nema podataka')}</td><td>${number(s.canaryPercent)}%</td><td>${number(s.totalSessions)}</td><td>${number(s.totalErrors)}</td><td>${status(...(s._metrics ? health(s._metrics.recentSessions || []) : ['Nema podataka', '']))}</td><td>${esc(date(s._metrics ? lastSeen(s._metrics.recentSessions || []) : null))}</td><td>${esc(s.runtimeVersion || 'Nema podataka')}</td><td><button data-store="${esc(s.id)}" ${state.saving ? 'disabled' : ''}>Otvori</button></td></tr>`).join('')));
+    document.getElementById('stores').innerHTML = panel('Prodavnice', table(['Prodavnica', 'Platforma', 'Status', 'Rollout', 'Sažeci 24h', 'Greške 24h', 'Tracking', 'Poslednji podaci', 'Runtime', 'Akcija'], state.stores.map(s => `<tr><td><strong>${esc(s.name)}</strong><div class="muted">${esc(s.domain)}</div></td><td>${esc(s.platform)}</td><td>${status(storeActivity(s._metrics))}</td><td>${number(s.canaryPercent)}%</td><td>${numeric(s._metrics?.summaryReports) ? number(s._metrics.summaryReports) : 'Nema podataka'}</td><td>${numeric(s._metrics?.errorReports) ? number(s._metrics.errorReports) : 'Nema podataka'}</td><td>${status(...(s._metrics ? health(s._metrics) : ['Nema podataka', '']))}</td><td>${esc(date(s._metrics?.lastTelemetryAt))}</td><td>${esc(s._metrics?.runtimeVersion || 'Nema podataka')}</td><td><button data-store="${esc(s.id)}" ${state.saving ? 'disabled' : ''}>Otvori</button></td></tr>`).join('')));
     document.querySelectorAll('[data-store]').forEach(button => button.onclick = () => { state.storeId = button.dataset.store; state.tab = 'overview'; loadDetail('24h'); });
   }
   async function loadDetail(period) {
     const request = ++state.request;
     message(); document.getElementById('detail').setAttribute('aria-busy', 'true');
     try {
-      const data = await api(page === 'admin' ? `/api/admin/stores/${encodeURIComponent(state.storeId)}` : `/api/client/overview?period=${encodeURIComponent(period)}`);
+      const data = await api(page === 'admin' ? `/api/admin/stores/${encodeURIComponent(state.storeId)}?period=${encodeURIComponent(period)}` : `/api/client/overview?period=${encodeURIComponent(period)}`);
       if (request !== state.request) return;
+      data.metrics = persistedMetrics(data.metrics);
       state.data = data; state.period = period;
+      if (!data.metrics.source.available) message('Nema podataka: čitanje sačuvane telemetrije nije omogućeno ili izvor nije dostupan.');
       if (page === 'admin') {
         const store = state.stores.find(s => s.id === data.store.id);
-        if (store) Object.assign(store, data.store, { _metrics: data.metrics, totalSessions: data.metrics.totalSessions, totalErrors: data.metrics.totalErrors });
+        if (store && period === '24h') Object.assign(store, data.store, { _metrics: data.metrics });
         renderStores();
       }
       renderDetail();
@@ -224,16 +226,10 @@
       if (page === 'admin' && user.role !== 'ADMIN') { location.href = '/dashboard'; return; }
       shell(user);
       if (page === 'admin') {
-        const { stores } = await api('/api/admin/stores'); state.stores = stores; renderStores();
+        const { stores } = await api('/api/admin/stores'); state.stores = stores.map(s => ({ ...s, _metrics: persistedMetrics(s.metrics) })); renderStores();
         if (!stores.length) { document.getElementById('detail').innerHTML = '<div class="empty">Nema prodavnica.</div>'; return; }
         state.storeId = stores[0].id;
-        // The list endpoint has no last-observation or vendor states. Read the
-        // existing detail endpoint for other rows rather than inventing summaries.
-        await Promise.allSettled(stores.slice(1).map(async store => {
-          const detail = await api(`/api/admin/stores/${encodeURIComponent(store.id)}`);
-          Object.assign(store, detail.store, { _metrics: detail.metrics });
-        }));
-        renderStores();
+
       }
       await loadDetail('24h');
     } catch (error) { app.innerHTML = `<main><p role="alert">${esc(error.message)}</p><button onclick="location.reload()">Pokušaj ponovo</button></main>`; }

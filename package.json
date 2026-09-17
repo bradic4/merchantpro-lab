@@ -11,18 +11,22 @@
     "dev": "tsx src/cli.ts",
     "build:ui": "node scripts/build-ui.mjs",
     "build": "npm run build:ui && tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/ui',{recursive:true});fs.copyFileSync('src/ui/index.html','dist/ui/index.html');\"",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.telemetry.json",
+    "telemetry:migrate": "node scripts/migrate-telemetry.mjs",
+    "telemetry:verify": "node scripts/verify-telemetry.mjs",
     "test": "npm run build:ui && tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "ui": "tsx src/cli.ts ui"
   },
   "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
     "chrome-launcher": "1.2.1",
     "lighthouse": "13.4.1",
     "puppeteer-core": "25.10.0",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@types/node": "24.13.3",
     "@types/sharp": "^0.32.0",
     "tsx": "4.23.13",

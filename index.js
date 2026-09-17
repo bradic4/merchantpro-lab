@@ -5,6 +5,7 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { shadowWrite, readTelemetryMetrics } from './lib/telemetry.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -150,70 +151,6 @@ const db = {
   },
   telemetry: []
 };
-
-function getStoreMetrics(storeId, windowHours = 24) {
-  const store = db.stores[storeId];
-  if (!store) return null;
-  const cutoff = Date.now() - windowHours * 3600 * 1000;
-  const sessions = db.telemetry.filter(t => t.storeId === storeId && t.timestamp >= cutoff);
-
-  let totalSessions = sessions.length;
-  let customersSessions = 0;
-  let searchCrawlers = 0;
-  let automationSessions = 0;
-  let optimizedSessions = 0;
-  let baselineSessions = 0;
-  let crawlerSessions = 0;
-  let totalErrors = 0;
-  const countryBreakdown = {};
-
-  for (const s of sessions) {
-    if (s.cohort === 'search_engine_baseline') {
-      searchCrawlers++;
-      crawlerSessions++;
-    } else if (s.cohort === 'foreign_canary') {
-      automationSessions++;
-      optimizedSessions++;
-    } else if (s.cohort === 'domestic_canary') {
-      customersSessions++;
-      optimizedSessions++;
-    } else {
-      customersSessions++;
-      baselineSessions++;
-    }
-
-    totalErrors += (s.errorsCount || 0);
-    const c = s.country || 'unknown';
-    countryBreakdown[c] = (countryBreakdown[c] || 0) + 1;
-  }
-
-  const reductionPercent = store.baselineBlockingMs > 0
-    ? Math.round(((store.optimizedBlockingMs - store.baselineBlockingMs) / store.baselineBlockingMs) * 1000) / 10
-    : 0;
-
-  const lastTimestamp = sessions.length > 0
-    ? Math.max(...sessions.map(s => s.timestamp))
-    : Date.now();
-
-  return {
-    storeId: storeId,
-    periodHours: windowHours,
-    totalSessions: totalSessions,
-    customersSessions: customersSessions,
-    searchCrawlers: searchCrawlers,
-    automationSessions: automationSessions,
-    optimizedSessions: optimizedSessions,
-    baselineSessions: baselineSessions,
-    crawlerSessions: crawlerSessions,
-    totalErrors: totalErrors,
-    lastCheckTime: new Date(lastTimestamp).toISOString(),
-    baselineBlockingMs: store.baselineBlockingMs,
-    optimizedBlockingMs: store.optimizedBlockingMs,
-    reductionPercent: reductionPercent,
-    recentSessions: sessions.slice(-50).sort((a, b) => b.timestamp - a.timestamp),
-    countryBreakdown: countryBreakdown
-  };
-}
 
 // --- DYNAMIC SCRIPT GENERATOR ---
 function resolveCohort(ctx, store) {
@@ -485,7 +422,7 @@ function loadHtmlFile(filename) {
 }
 
 // --- MAIN HANDLER ---
-export default function handler(req, res) {
+export default async function handler(req, res) {
   const host = req.headers.host || 'merchantpro-lab.vercel.app';
   const url = new URL(req.url, 'https://' + host);
   const pathname = url.pathname;
@@ -519,6 +456,9 @@ export default function handler(req, res) {
   function sendJson(statusCode, data) {
     res.statusCode = statusCode;
     res.setHeader('Content-Type', 'application/json');
+    if (pathname.startsWith('/api/client/') || pathname.startsWith('/api/admin/')) {
+      res.setHeader('Cache-Control', 'private, no-store');
+    }
     res.end(JSON.stringify(data));
   }
 
@@ -572,7 +512,7 @@ export default function handler(req, res) {
 
   // --- 2. TELEMETRY BEACON: /api/telemetry ---
   if (pathname === '/api/telemetry') {
-    readJsonBody((_, data) => {
+    readJsonBody(async (_, data) => {
       const payload = data || {};
       const storeId = payload.storeId || 'volimsvojdom';
       const country = req.headers['x-vercel-ip-country'] || payload.country || 'unknown';
@@ -604,6 +544,8 @@ export default function handler(req, res) {
         country: country,
         clientIp: clientIp
       }, payload)));
+
+      await shadowWrite(payload, { receivedAt: Date.now(), edgeCountry: req.headers['x-vercel-ip-country'] });
 
       sendJson(200, { ok: true, id: sessionEntry.id });
     });
@@ -660,7 +602,7 @@ export default function handler(req, res) {
 
     const period = url.searchParams.get('period') || '24h';
     const hours = period === '30d' ? 720 : (period === '7d' ? 168 : 24);
-    const metrics = getStoreMetrics(storeId, hours);
+    const metrics = await readTelemetryMetrics(storeId, hours);
 
     return sendJson(200, { store: store, metrics: metrics, period: period });
   }
@@ -673,13 +615,15 @@ export default function handler(req, res) {
 
     // GET /api/admin/stores
     if (pathname === '/api/admin/stores' && req.method === 'GET') {
-      const storesList = Object.values(db.stores).map(s => {
-        const m = getStoreMetrics(s.id, 24);
+      const asOf = new Date();
+      const storesList = await Promise.all(Object.values(db.stores).map(async s => {
+        const m = await readTelemetryMetrics(s.id, 24, { asOf });
         return Object.assign({}, s, {
           totalSessions: m.totalSessions,
-          totalErrors: m.totalErrors
+          totalErrors: m.totalErrors,
+          metrics: m
         });
-      });
+      }));
       return sendJson(200, { stores: storesList });
     }
 
@@ -689,7 +633,9 @@ export default function handler(req, res) {
       const storeId = storeDetailMatch[1];
       const store = db.stores[storeId];
       if (!store) return sendJson(404, { error: 'Prodavnica ne postoji.' });
-      const metrics = getStoreMetrics(storeId, 24);
+      const period = url.searchParams.get('period') || '24h';
+      const hours = period === '30d' ? 720 : period === '7d' ? 168 : 24;
+      const metrics = await readTelemetryMetrics(storeId, hours);
       return sendJson(200, { store: store, metrics: metrics });
     }
 

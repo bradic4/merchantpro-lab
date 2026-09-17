@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "echo 'Edge build complete'",
+  "crons": [{ "path": "/api/telemetry-retention", "schedule": "0 3 * * *" }],
   "rewrites": [
     {
       "source": "/sd.js",

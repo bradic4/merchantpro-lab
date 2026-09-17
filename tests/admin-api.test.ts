@@ -68,7 +68,8 @@ test('Full Commercial API lifecycle: Auth, Tenant Isolation, Remote Config & Dyn
   assert.equal(clientOverviewRes.status, 200);
   const overviewData = await clientOverviewRes.json();
   assert.equal(overviewData.store.id, 'volimsvojdom');
-  assert.equal(overviewData.metrics.reductionPercent, -38.9);
+  assert.equal(overviewData.metrics.reductionPercent, null);
+  assert.equal(overviewData.metrics.source.available, false);
 
   // 6. Tenant Isolation: Client CANNOT access admin API
   const clientToAdminRes = await fetch(`${url}/api/admin/stores`, {
@@ -130,12 +131,12 @@ test('Full Commercial API lifecycle: Auth, Tenant Isolation, Remote Config & Dyn
   });
   assert.equal(telemetryRes.status, 200);
 
-  // Verify telemetry was recorded
+  // Memory ingestion must never be presented as durable dashboard telemetry.
   const clientUpdatedOverviewRes = await fetch(`${url}/api/client/overview`, {
     headers: { Authorization: `Bearer ${clientToken}` }
   });
   const updatedOverview = await clientUpdatedOverviewRes.json();
-  assert.ok(updatedOverview.metrics.totalSessions >= 1);
-  assert.ok(updatedOverview.metrics.recentSessions.length >= 1);
-  assert.equal(updatedOverview.metrics.recentSessions[0].cohort, 'domestic_canary');
+  assert.equal(updatedOverview.metrics.totalSessions, null);
+  assert.equal(updatedOverview.metrics.recentSessions.length, 0);
+  assert.equal(updatedOverview.metrics.source.reason, 'reads_not_enabled');
 });
