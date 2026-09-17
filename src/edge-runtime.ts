@@ -92,6 +92,8 @@ export function generateEdgeScript(ctx: EdgeGeoContext, config: EdgeCanaryConfig
   if (urlParams.indexOf('canary=0') !== -1) safeRemoveSession('__sdForced');
   if (urlParams.indexOf('no_defer=1') !== -1) safeSetSession('__sdKillSwitch', '1');
   if (urlParams.indexOf('no_defer=0') !== -1) safeRemoveSession('__sdKillSwitch');
+  if (urlParams.indexOf('domestic=1') !== -1) safeSetSession('__sdDomesticCohort', 'domestic_canary');
+  if (urlParams.indexOf('domestic=0') !== -1) safeRemoveSession('__sdDomesticCohort');
 
   var isKillSwitched = window.SMART_DEFERRAL_ENABLED === false ||
     urlParams.indexOf('no_defer=1') !== -1 ||
@@ -100,13 +102,26 @@ export function generateEdgeScript(ctx: EdgeGeoContext, config: EdgeCanaryConfig
   var isCanaryForced = urlParams.indexOf('canary=1') !== -1 ||
     safeGetSession('__sdForced') === '1';
 
+  var isCanaryDisabled = urlParams.indexOf('canary=0') !== -1;
+
   var activeCohort = isKillSwitched ? 'kill_switched' : (isCanaryForced ? 'forced_canary' : '${cohort}');
-  var shouldDefer = (activeCohort === 'forced_canary' || activeCohort === 'foreign_canary');
+  if (!isKillSwitched && !isCanaryForced && !isCanaryDisabled && '${country}' === 'RS') {
+    var storedCohort = safeGetSession('__sdDomesticCohort');
+    if (storedCohort) {
+      activeCohort = storedCohort;
+    } else {
+      var roll = Math.random() * 100;
+      activeCohort = (roll < 1.0) ? 'domestic_canary' : 'baseline';
+      safeSetSession('__sdDomesticCohort', activeCohort);
+    }
+  }
+
+  var shouldDefer = (activeCohort === 'forced_canary' || activeCohort === 'foreign_canary' || activeCohort === 'domestic_canary');
 
   // --- TELEMETRY & BEACON ---
   var beaconUrl = '${beaconUrl}';
   window.__sdTelemetry = {
-    version: '0.2.2-edge',
+    version: '0.3.0-edge',
     cohort: activeCohort,
     country: '${country}',
     mode: shouldDefer ? 'smart_deferral_canary' : 'immediate_fallback',

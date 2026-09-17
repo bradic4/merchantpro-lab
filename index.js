@@ -57,13 +57,26 @@ function generateScript(ctx) {
     '  if (urlParams.indexOf("canary=0") !== -1) safeRemoveSession("__sdForced");\n' +
     '  if (urlParams.indexOf("no_defer=1") !== -1) safeSetSession("__sdKillSwitch", "1");\n' +
     '  if (urlParams.indexOf("no_defer=0") !== -1) safeRemoveSession("__sdKillSwitch");\n' +
+    '  if (urlParams.indexOf("domestic=1") !== -1) safeSetSession("__sdDomesticCohort", "domestic_canary");\n' +
+    '  if (urlParams.indexOf("domestic=0") !== -1) safeRemoveSession("__sdDomesticCohort");\n' +
     '  var isKillSwitched = window.SMART_DEFERRAL_ENABLED === false || urlParams.indexOf("no_defer=1") !== -1 || safeGetSession("__sdKillSwitch") === "1";\n' +
     '  var isCanaryForced = urlParams.indexOf("canary=1") !== -1 || safeGetSession("__sdForced") === "1";\n' +
+    '  var isCanaryDisabled = urlParams.indexOf("canary=0") !== -1;\n' +
     '  var activeCohort = isKillSwitched ? "kill_switched" : (isCanaryForced ? "forced_canary" : "' + cohort + '");\n' +
-    '  var shouldDefer = (activeCohort === "forced_canary" || activeCohort === "foreign_canary");\n' +
+    '  if (!isKillSwitched && !isCanaryForced && !isCanaryDisabled && "' + country + '" === "RS") {\n' +
+    '    var storedCohort = safeGetSession("__sdDomesticCohort");\n' +
+    '    if (storedCohort) {\n' +
+    '      activeCohort = storedCohort;\n' +
+    '    } else {\n' +
+    '      var roll = Math.random() * 100;\n' +
+    '      activeCohort = (roll < 1.0) ? "domestic_canary" : "baseline";\n' +
+    '      safeSetSession("__sdDomesticCohort", activeCohort);\n' +
+    '    }\n' +
+    '  }\n' +
+    '  var shouldDefer = (activeCohort === "forced_canary" || activeCohort === "foreign_canary" || activeCohort === "domestic_canary");\n' +
     '  var beaconUrl = "' + beaconUrl + '";\n' +
     '  window.__sdTelemetry = {\n' +
-    '    version: "0.2.2-edge",\n' +
+    '    version: "0.3.0-edge",\n' +
     '    cohort: activeCohort,\n' +
     '    country: "' + country + '",\n' +
     '    mode: shouldDefer ? "smart_deferral_canary" : "immediate_fallback",\n' +

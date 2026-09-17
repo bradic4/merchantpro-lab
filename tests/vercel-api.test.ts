@@ -110,3 +110,21 @@ test('generateEdgeScript generates valid JS containing DOM interceptor and telem
   assert.ok(script.includes('window.TiktokAnalyticsObject'));
   assert.ok(script.includes('sd_long_task_blocking_ms'));
 });
+
+test('generateEdgeScript includes 1% domestic canary logic for RS visitors', () => {
+  const ctx: EdgeGeoContext = {
+    country: 'RS',
+    ip: '109.92.1.1',
+    host: 'merchantpro-lab.vercel.app',
+    url: 'https://merchantpro-lab.vercel.app/sd.js',
+    userAgent: 'Mozilla/5.0 Chrome/120',
+    query: {},
+  };
+
+  const script = generateEdgeScript(ctx);
+  assert.ok(script.includes('Smart Deferral Edge Runtime'));
+  assert.ok(script.includes('Country: RS'));
+  assert.ok(script.includes('__sdDomesticCohort'));
+  assert.ok(script.includes('domestic_canary'));
+  assert.ok(script.includes('roll < 1.0'));
+});
