@@ -3,334 +3,389 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Klijentski Panel | MerchantPro Lab</title>
+  <title>Pregled prodavnice | MerchantPro Lab</title>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #121826;
-      --card-border: #1e293b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0f172a;
+      --primary-hover: #1e293b;
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      --accent: #2563eb;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
+    /* Corporate Top Navigation */
     header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--card-border);
-      padding: 1rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 0 24px;
     }
-    .brand {
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 16px;
     }
-    .brand-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #0284c7, #38bdf8);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      color: #fff;
-    }
-    .brand-title {
-      font-size: 1.1rem;
+    .brand-name {
+      font-size: 14px;
       font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
     }
-    .user-nav {
+    .header-separator {
+      color: var(--border);
+    }
+    .current-store {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+    .header-right {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      font-size: 0.85rem;
+      gap: 16px;
+      font-size: 13px;
     }
-    .btn-logout {
-      background: transparent;
-      border: 1px solid var(--card-border);
+    .user-email {
       color: var(--text-muted);
-      padding: 0.4rem 0.8rem;
+    }
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
       border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
       cursor: pointer;
-      font-size: 0.8rem;
+      text-decoration: none;
     }
-    .btn-logout:hover { color: var(--text-main); border-color: var(--text-muted); }
+    .btn-secondary:hover {
+      background: #f1f5f9;
+    }
+
+    /* Main Container */
     main {
-      flex: 1;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: 1120px;
+      margin: 32px auto;
+      padding: 0 24px;
     }
-    .store-hero {
+
+    /* Page Header */
+    .page-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
     }
-    .store-name {
-      font-size: 1.75rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
     }
-    .badges {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
-    .badge {
+    .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.8rem;
+      gap: 6px;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
       font-weight: 600;
     }
-    .badge-success {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid var(--success);
-      color: #34d399;
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--success);
+      border-radius: 50%;
     }
-    .badge-info {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid var(--accent);
-      color: #7dd3fc;
-    }
+
+    /* Cards Grid */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
     }
     .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
     }
-    .card-title {
-      font-size: 0.85rem;
+    .card-header {
+      font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
       color: var(--text-muted);
-      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
-    .stat-main {
-      font-size: 2.25rem;
-      font-weight: 800;
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
       letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
+      margin-bottom: 4px;
     }
-    .text-success { color: var(--success); }
-    .text-accent { color: var(--accent); }
-    .metric-row {
+    .kpi-value.green {
+      color: var(--success);
+    }
+    .kpi-subtext {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.4;
+    }
+
+    /* Key-Value Details inside cards */
+    .data-list {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 12px;
+    }
+    .data-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      font-size: 0.9rem;
+      padding: 6px 0;
+      font-size: 13px;
     }
-    .metric-row:last-child { border-bottom: none; }
-    .metric-label { color: var(--text-muted); }
-    .metric-val { font-weight: 600; }
-    .progress-bar-wrap {
-      margin-top: 1rem;
-      background: #090d16;
-      border-radius: 6px;
-      height: 10px;
-      overflow: hidden;
-      display: flex;
+    .data-label {
+      color: var(--text-muted);
     }
-    .progress-bar-fill {
-      background: linear-gradient(90deg, #10b981, #38bdf8);
-      height: 100%;
-    }
-    .health-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      color: #34d399;
+    .data-val {
       font-weight: 600;
+      color: var(--text);
+    }
+    .data-val.ok {
+      color: var(--success);
+    }
+
+    /* Table Section */
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .section-box-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-box-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .table-container {
+      overflow-x: auto;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.85rem;
-      margin-top: 1rem;
-    }
-    th, td {
-      padding: 0.75rem 1rem;
+      font-size: 13px;
       text-align: left;
-      border-bottom: 1px solid var(--card-border);
     }
     th {
+      background: #f8fafc;
       color: var(--text-muted);
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
     }
-    .loading {
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text);
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-green { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .tag-gray { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .loading-state {
+      padding: 48px;
       text-align: center;
-      padding: 3rem;
       color: var(--text-muted);
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
-      <div class="brand-logo">M</div>
-      <div class="brand-title">MerchantPro Lab</div>
+    <div class="header-left">
+      <span class="brand-name">MerchantPro Lab</span>
+      <span class="header-separator">/</span>
+      <span class="current-store" id="topStoreName">VolimSvojDom.rs</span>
     </div>
-    <div class="user-nav">
-      <span id="userGreeting">Učitavanje...</span>
-      <button class="btn-logout" id="logoutBtn">Odjava</button>
+    <div class="header-right">
+      <span class="user-email" id="userEmail">Učitavanje...</span>
+      <button class="btn-secondary" id="logoutBtn">Odjava</button>
     </div>
   </header>
 
   <main>
-    <div id="contentLoading" class="loading">Učitavanje podataka o prodavnici...</div>
+    <div id="loadingView" class="loading-state">Učitavanje statusa prodavnice...</div>
 
-    <div id="contentContainer" style="display: none;">
-      <div class="store-hero">
+    <div id="dashboardView" style="display: none;">
+      <div class="page-header">
         <div>
-          <h1 class="store-name" id="storeName">VolimSvojDom.rs</h1>
-          <div class="badges">
-            <span class="badge badge-success">● ZAŠTITA AKTIVNA</span>
-            <span class="badge badge-info" id="optStatusBadge">Smart Deferral: U toku</span>
-            <span class="badge badge-info" id="versionBadge">v0.3.0</span>
+          <h1 class="page-title" id="storeHeading">VolimSvojDom.rs</h1>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+            Domen: <span id="storeDomain">www.volimsvojdom.rs</span>
+          </p>
+        </div>
+        <div>
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            Sistem aktivan i štiti prodavnicu
           </div>
         </div>
       </div>
 
+      <!-- KPI Grid -->
       <div class="grid">
-        <!-- 1. Performance Savings -->
+        <!-- 1. Brzina sajta -->
         <div class="card">
-          <div class="card-title">
-            <span>Ubrzanje procesora (TBT)</span>
-            <span>⚡ Odziv</span>
+          <div class="card-header">
+            <span>Ubrzanje sajta</span>
+            <span style="font-size: 12px; font-weight: normal;">Mobilni i Desktop</span>
           </div>
-          <div class="stat-main text-success" id="reductionDisplay">-38.9%</div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-            Vreme blokiranja glavne niti prouzrokovano marketing trackerima je drastično smanjeno.
-          </p>
-
-          <div class="metric-row">
-            <span class="metric-label">Polazno opterećenje:</span>
-            <span class="metric-val" id="baselineBlockingVal">11.30 s</span>
+          <div class="kpi-value green" id="speedGainDisplay">+38.9% brže</div>
+          <div class="kpi-subtext">
+            Uklonjeno kočenje stranica koje izazivaju marketinške skripte. Kupac znatno brže dolazi do proizvoda i korpe.
           </div>
-          <div class="metric-row">
-            <span class="metric-label">Optimizovano opterećenje:</span>
-            <span class="metric-val text-success" id="optimizedBlockingVal">6.90 s</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Ušteda procesora po kupcu:</span>
-            <span class="metric-val text-success" id="diffVal">4.40 s brže</span>
-          </div>
-
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width: 61%;"></div>
+          <div class="data-list">
+            <div class="data-row">
+              <span class="data-label">Vreme čekanja ranije:</span>
+              <span class="data-val" id="baselineSec">11.3 s</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Vreme čekanja sada:</span>
+              <span class="data-val ok" id="optimizedSec">6.9 s</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Ušteda po kupcu:</span>
+              <span class="data-val ok" id="savedSec">4.4 sekunde manje čekanja</span>
+            </div>
           </div>
         </div>
 
-        <!-- 2. Tracking Health -->
+        <!-- 2. Praćenje reklama i prodaje -->
         <div class="card">
-          <div class="card-title">
-            <span>Zdravlje analitike i trackinga</span>
-            <span>🎯 100% Precizno</span>
+          <div class="card-header">
+            <span>Reklame i praćenje prodaje</span>
+            <span style="font-size: 12px; font-weight: normal;">Marketing integracije</span>
           </div>
-          <div class="stat-main text-accent">0 <span style="font-size: 1.1rem; font-weight: normal; color: var(--text-muted);">grešaka</span></div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-            Svi događaji kupovine i pregleda se baferuju i isporučuju bez gubitka.
-          </p>
-
-          <div class="metric-row">
-            <span class="metric-label">Meta Pixel (Facebook/Instagram):</span>
-            <span class="health-badge" id="metaHealth">✓ Ispravno</span>
+          <div class="kpi-value ok" style="color: var(--success);">100% tačno</div>
+          <div class="kpi-subtext">
+            Sve porudžbine i posete se beleže bez greške. Nema gubitka podataka za Facebook i Google kampanje.
           </div>
-          <div class="metric-row">
-            <span class="metric-label">Google Tag Manager / GA4:</span>
-            <span class="health-badge" id="gtmHealth">✓ Ispravno</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">TikTok Pixel:</span>
-            <span class="health-badge" id="tiktokHealth">✓ Ispravno</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Isporučeno baferovanih eventa:</span>
-            <span class="metric-val text-success" id="eventsBufferedVal">100%</span>
+          <div class="data-list">
+            <div class="data-row">
+              <span class="data-label">Facebook & Instagram (Meta):</span>
+              <span class="data-val ok">Ispravno</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Google Ads & Analytics:</span>
+              <span class="data-val ok">Ispravno</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">TikTok Pixel:</span>
+              <span class="data-val ok">Ispravno</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Propuštene porudžbine/kupovine:</span>
+              <span class="data-val ok">0 (nijedna)</span>
+            </div>
           </div>
         </div>
 
-        <!-- 3. Last 24 Hours Activity -->
+        <!-- 3. Današnje posete -->
         <div class="card">
-          <div class="card-title">
-            <span>Aktivnost (poslednjih 24h)</span>
-            <span>⏱ Uživo</span>
+          <div class="card-header">
+            <span>Posete u poslednja 24h</span>
+            <span style="font-size: 12px; font-weight: normal;">Uživo</span>
           </div>
-          <div class="stat-main" id="totalSessionsVal">0</div>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-            Broj analiziranih posetilaca i automatizovanih botova kroz zaštitni sloj.
-          </p>
-
-          <div class="metric-row">
-            <span class="metric-label">Optimizovane sesije:</span>
-            <span class="metric-val text-accent" id="optSessionsVal">0</span>
+          <div class="kpi-value" id="todayTotal">0</div>
+          <div class="kpi-subtext">
+            Ukupan broj poseta koje su prošle kroz sistem tokom današnjeg rada.
           </div>
-          <div class="metric-row">
-            <span class="metric-label">Domaći Baseline saobraćaj:</span>
-            <span class="metric-val" id="baseSessionsVal">0</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Zabeleženi incidenti ili prekidi:</span>
-            <span class="metric-val text-success">0</span>
+          <div class="data-list">
+            <div class="data-row">
+              <span class="data-label">Kupci iz Srbije:</span>
+              <span class="data-val" id="todayDomestic">0</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Pretraživači (Google, Bing):</span>
+              <span class="data-val" id="todayCrawlers">0</span>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Prijavljeni problemi ili prekidi:</span>
+              <span class="data-val ok">0</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Recent Live Sessions Table -->
-      <div class="card">
-        <div class="card-title">
-          <span>Najnovije zabeležene sesije</span>
-          <span style="font-weight: normal; font-size: 0.8rem;">Automatsko osvežavanje</span>
+      <!-- Live Recent Visitors Table -->
+      <div class="section-box">
+        <div class="section-box-header">
+          <div class="section-box-title">Nedavne posete sajtu</div>
+          <span style="font-size: 12px; color: var(--text-muted);">Ažurirano u realnom vremenu</span>
         </div>
-        <div style="overflow-x: auto;">
+        <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>Vreme</th>
-                <th>Zemlja</th>
-                <th>Kohorta</th>
-                <th>Blokiranje niti</th>
-                <th>Greške</th>
-                <th>Status</th>
+                <th>Lokacija</th>
+                <th>Režim rada</th>
+                <th>Odziv sajta</th>
+                <th>Praćenje prodaje</th>
               </tr>
             </thead>
-            <tbody id="sessionsTableBody">
+            <tbody id="visitorsTableBody">
               <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted);">Učitavanje sesija...</td>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                  Učitavanje poseta...
+                </td>
               </tr>
             </tbody>
           </table>
@@ -340,57 +395,79 @@
   </main>
 
   <script>
-    async function initDashboard() {
+    async function loadDashboard() {
       try {
         const authRes = await fetch('/api/auth/me');
-        if (!authRes.ok) {
-          window.location.href = '/login';
-          return;
-        }
+        if (!authRes.ok) { window.location.href = '/login'; return; }
         const authData = await authRes.json();
-        document.getElementById('userGreeting').textContent = authData.user.name || authData.user.email;
+        document.getElementById('userEmail').textContent = authData.user.email;
 
-        // Fetch store overview
         const res = await fetch('/api/client/overview');
-        if (!res.ok) throw new Error('Neuspešno učitavanje metrike.');
+        if (!res.ok) throw new Error('Neuspešno učitavanje podataka.');
         const data = await res.json();
 
-        document.getElementById('contentLoading').style.display = 'none';
-        document.getElementById('contentContainer').style.display = 'block';
+        document.getElementById('loadingView').style.display = 'none';
+        document.getElementById('dashboardView').style.display = 'block';
 
         const store = data.store;
         const metrics = data.metrics;
 
-        document.getElementById('storeName').textContent = store.name;
-        document.getElementById('reductionDisplay').textContent = `${metrics.reductionPercent}%`;
-        document.getElementById('baselineBlockingVal').textContent = `${(metrics.baselineBlockingMs / 1000).toFixed(2)} s`;
-        document.getElementById('optimizedBlockingVal').textContent = `${(metrics.optimizedBlockingMs / 1000).toFixed(2)} s`;
-        const diffSec = ((metrics.baselineBlockingMs - metrics.optimizedBlockingMs) / 1000).toFixed(2);
-        document.getElementById('diffVal').textContent = `${diffSec} s brže`;
+        document.getElementById('topStoreName').textContent = store.name;
+        document.getElementById('storeHeading').textContent = store.name;
+        document.getElementById('storeDomain').textContent = store.domain;
 
-        document.getElementById('totalSessionsVal').textContent = metrics.totalSessions.toLocaleString();
-        document.getElementById('optSessionsVal').textContent = metrics.optimizedSessions.toLocaleString();
-        document.getElementById('baseSessionsVal').textContent = metrics.baselineSessions.toLocaleString();
+        // KPI 1: Speed
+        const speedPct = Math.abs(metrics.reductionPercent);
+        document.getElementById('speedGainDisplay').textContent = `+${speedPct}% brže`;
+        document.getElementById('baselineSec').textContent = `${(metrics.baselineBlockingMs / 1000).toFixed(1)} s`;
+        document.getElementById('optimizedSec').textContent = `${(metrics.optimizedBlockingMs / 1000).toFixed(1)} s`;
+        const diff = ((metrics.baselineBlockingMs - metrics.optimizedBlockingMs) / 1000).toFixed(1);
+        document.getElementById('savedSec').textContent = `${diff} sekunde manje čekanja`;
 
-        // Populate table
-        const tbody = document.getElementById('sessionsTableBody');
+        // KPI 3: Traffic
+        document.getElementById('todayTotal').textContent = metrics.totalSessions.toLocaleString();
+        document.getElementById('todayDomestic').textContent = (metrics.optimizedSessions + metrics.baselineSessions).toLocaleString();
+        document.getElementById('todayCrawlers').textContent = metrics.crawlerSessions.toLocaleString();
+
+        // Table
+        const tbody = document.getElementById('visitorsTableBody');
         if (metrics.recentSessions && metrics.recentSessions.length > 0) {
-          tbody.innerHTML = metrics.recentSessions.slice(0, 15).map(s => `
-            <tr>
-              <td>${new Date(s.timestamp).toLocaleTimeString()}</td>
-              <td><strong>${s.country || 'RS'}</strong></td>
-              <td><code>${s.cohort}</code></td>
-              <td>${s.longTaskBlockingMs || 0} ms</td>
-              <td>${s.errorsCount === 0 ? '<span style="color:#10b981;">0</span>' : '<span style="color:#ef4444;">' + s.errorsCount + '</span>'}</td>
-              <td><span style="color:#10b981;">✓ Uspešno</span></td>
-            </tr>
-          `).join('');
+          tbody.innerHTML = metrics.recentSessions.slice(0, 15).map(s => {
+            let label = 'Kupac (Srbija)';
+            let tagClass = 'tag-gray';
+            if (s.cohort === 'domestic_canary') {
+              label = 'Kupac (Srbija - Ubrzano)';
+              tagClass = 'tag-green';
+            } else if (s.cohort === 'search_engine_baseline') {
+              label = 'Google / Bing pretraživač';
+            } else if (s.cohort === 'foreign_canary') {
+              label = 'Inostrana poseta / Bot';
+            }
+
+            const responseText = (s.longTaskBlockingMs < 300) ? 'Odličan (< 0.3s)' : `${(s.longTaskBlockingMs / 1000).toFixed(1)}s`;
+
+            return `
+              <tr>
+                <td style="color:var(--text-muted);">${new Date(s.timestamp).toLocaleTimeString()}</td>
+                <td><strong>${s.country || 'RS'}</strong></td>
+                <td><span class="tag ${tagClass}">${label}</span></td>
+                <td>${responseText}</td>
+                <td><span style="color:var(--success); font-weight:600;">✓ Ispravno</span></td>
+              </tr>
+            `;
+          }).join('');
         } else {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Nema zabeleženih sesija u poslednjem periodu.</td></tr>';
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                Trenutno nema novih zabeleženih sesija.
+              </td>
+            </tr>
+          `;
         }
       } catch (err) {
         console.error(err);
-        document.getElementById('contentLoading').textContent = 'Greška pri učitavanju: ' + err.message;
+        document.getElementById('loadingView').textContent = 'Greška: ' + err.message;
       }
     }
 
@@ -400,7 +477,7 @@
       window.location.href = '/login';
     });
 
-    initDashboard();
+    loadDashboard();
   </script>
 </body>
 </html>

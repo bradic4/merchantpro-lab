@@ -6,352 +6,344 @@
   <title>Admin Operacije | MerchantPro Lab</title>
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #121826;
-      --card-border: #1e293b;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent: #38bdf8;
-      --accent-hover: #0ea5e9;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0f172a;
+      --primary-hover: #1e293b;
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --danger-border: #fecaca;
+      --accent: #2563eb;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: var(--bg);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
     }
     header {
-      background: var(--card-bg);
-      border-bottom: 1px solid var(--card-border);
-      padding: 1rem 2rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 0 24px;
     }
-    .brand {
+    .header-left {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-    }
-    .brand-logo {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #0284c7, #38bdf8);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      color: #fff;
+      gap: 12px;
     }
     .brand-title {
-      font-size: 1.1rem;
+      font-size: 14px;
       font-weight: 700;
+      color: var(--text);
     }
-    .admin-pill {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid var(--danger);
-      color: #f87171;
+    .badge-admin {
+      background: #0f172a;
+      color: #ffffff;
       padding: 2px 8px;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      margin-left: 0.5rem;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
     }
-    .user-nav {
+    .header-right {
       display: flex;
       align-items: center;
-      gap: 1rem;
-      font-size: 0.85rem;
+      gap: 16px;
+      font-size: 13px;
     }
-    .btn-logout {
-      background: transparent;
-      border: 1px solid var(--card-border);
-      color: var(--text-muted);
-      padding: 0.4rem 0.8rem;
+    .btn-secondary {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
       border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
       cursor: pointer;
-      font-size: 0.8rem;
     }
-    .btn-logout:hover { color: var(--text-main); border-color: var(--text-muted); }
+    .btn-secondary:hover { background: #f1f5f9; }
     main {
-      flex: 1;
-      max-width: 1300px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: 1200px;
+      margin: 32px auto;
+      padding: 0 24px;
     }
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
+    .section-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: #ffffff;
     }
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .table-container {
+      overflow-x: auto;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-    th, td {
-      padding: 0.85rem 1rem;
+      font-size: 13px;
       text-align: left;
-      border-bottom: 1px solid var(--card-border);
     }
     th {
+      background: #f8fafc;
       color: var(--text-muted);
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.2);
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
     }
-    tr:hover td { background: rgba(255, 255, 255, 0.02); }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr.selected td { background: #f8fafc; }
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
       font-weight: 600;
     }
-    .badge-live {
-      background: rgba(16, 185, 129, 0.15);
-      border: 1px solid var(--success);
-      color: #34d399;
-    }
-    .badge-pilot {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid var(--accent);
-      color: #7dd3fc;
-    }
-    .badge-issue {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid var(--danger);
-      color: #f87171;
-    }
+    .tag-live { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
+    .tag-pilot { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .tag-issue { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
     .btn-sm {
-      background: #1e293b;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 0.35rem 0.75rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
       font-weight: 500;
+      cursor: pointer;
     }
-    .btn-sm:hover { background: var(--accent); color: #090d16; border-color: var(--accent); }
-    .control-panel {
+    .btn-sm:hover { background: #f1f5f9; }
+    .control-layout {
+      padding: 20px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+      gap: 24px;
     }
-    @media (max-width: 900px) {
-      .control-panel { grid-template-columns: 1fr; }
+    @media (max-width: 800px) {
+      .control-layout { grid-template-columns: 1fr; }
     }
     .control-group {
-      margin-bottom: 1.25rem;
+      margin-bottom: 20px;
     }
     .control-label {
-      font-size: 0.85rem;
+      font-size: 13px;
       font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
+      color: var(--text);
+      margin-bottom: 8px;
       display: block;
     }
     .button-group {
       display: flex;
-      gap: 0.5rem;
+      gap: 6px;
       flex-wrap: wrap;
     }
-    .btn-option {
-      padding: 0.6rem 1rem;
-      background: #090d16;
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.85rem;
+    .btn-choice {
+      padding: 7px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
       cursor: pointer;
-      transition: all 0.2s;
     }
-    .btn-option.active {
-      background: var(--accent);
-      color: #090d16;
-      border-color: var(--accent);
+    .btn-choice.active {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
     }
-    .toggle-row {
+    .toggle-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.75rem 1rem;
-      background: #090d16;
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
     }
-    .btn-save {
-      background: var(--accent);
-      color: #090d16;
-      padding: 0.85rem 1.5rem;
-      font-weight: 700;
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      padding: 9px 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 1rem;
       width: 100%;
-      font-size: 0.95rem;
     }
-    .btn-save:hover { background: var(--accent-hover); }
-    .toast {
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      margin-bottom: 1rem;
+    .btn-primary:hover { background: var(--primary-hover); }
+    .alert-saved {
+      margin: 16px 20px 0;
+      padding: 10px 14px;
+      background: var(--success-bg);
+      border: 1px solid var(--success-border);
+      color: var(--success);
+      font-size: 13px;
+      border-radius: 6px;
       display: none;
-      background: rgba(16, 185, 129, 0.2);
-      border: 1px solid var(--success);
-      color: #34d399;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
-      <div class="brand-logo">M</div>
-      <div class="brand-title">MerchantPro Lab</div>
-      <span class="admin-pill">ADMIN / OPERATOR</span>
+    <div class="header-left">
+      <span class="brand-title">MerchantPro Lab</span>
+      <span class="badge-admin">ADMIN</span>
     </div>
-    <div class="user-nav">
-      <span id="userGreeting">Admin</span>
-      <button class="btn-logout" id="logoutBtn">Odjava</button>
+    <div class="header-right">
+      <span id="userGreeting" style="color:var(--text-muted);">Admin</span>
+      <button class="btn-secondary" id="logoutBtn">Odjava</button>
     </div>
   </header>
 
   <main>
-    <div id="saveToast" class="toast">Podešavanja su uspešno ažurirana na Edge runtime-u!</div>
-
-    <!-- 1. STORES OVERSIGHT TABLE -->
-    <div class="card">
-      <div class="section-title">
-        <span>Aktivne prodavnice i klijenti</span>
-        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">Sistem: v0.3.0</span>
+    <!-- 1. STORES LIST -->
+    <div class="section-box">
+      <div class="section-header">
+        <div class="section-title">Aktivne klijentske prodavnice</div>
+        <span style="font-size: 12px; color: var(--text-muted);">Runtime v0.3.0</span>
       </div>
-      <div style="overflow-x: auto;">
+      <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>Prodavnica</th>
               <th>Platforma</th>
               <th>Status</th>
-              <th>Canary %</th>
-              <th>Greške</th>
+              <th>Rollout (Domaći %)</th>
+              <th>Greške (24h)</th>
               <th>Tracking</th>
-              <th>Akcije</th>
+              <th>Akcija</th>
             </tr>
           </thead>
           <tbody id="storesTableBody">
             <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted);">Učitavanje prodavnica...</td>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                Učitavanje prodavnica...
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <!-- 2. REMOTE CONTROL ROOM -->
-    <div class="card">
-      <div class="section-title">
-        <span>Kontrolni panel za prodavnicu: <strong id="selectedStoreName" style="color: var(--accent);">VolimSvojDom.rs</strong></span>
+    <!-- 2. CONTROL ROOM -->
+    <div class="section-box">
+      <div class="section-header">
+        <div class="section-title">
+          Kontrole za prodavnicu: <span id="activeStoreHeading" style="font-weight:700;">VolimSvojDom.rs</span>
+        </div>
       </div>
 
-      <div class="control-panel">
+      <div id="saveToast" class="alert-saved">Izmene su sačuvane i primenjene na Vercel Edge čvorovima.</div>
+
+      <div class="control-layout">
         <div>
-          <!-- Canary Ladder -->
           <div class="control-group">
-            <label class="control-label">Domaći (RS) Canary Rollout procenat:</label>
-            <div class="button-group" id="canaryButtonGroup">
-              <button type="button" class="btn-option" data-percent="0">0% (Baseline)</button>
-              <button type="button" class="btn-option" data-percent="1">1% (Safe)</button>
-              <button type="button" class="btn-option" data-percent="5">5% (Fast)</button>
-              <button type="button" class="btn-option" data-percent="10">10%</button>
-              <button type="button" class="btn-option" data-percent="100">100% (Full)</button>
+            <label class="control-label">Domaći (RS) Rollout procenat:</label>
+            <div class="button-group" id="canaryGroup">
+              <button type="button" class="btn-choice" data-percent="0">0% (Svi na standardno)</button>
+              <button type="button" class="btn-choice" data-percent="1">1% (Siguran test)</button>
+              <button type="button" class="btn-choice" data-percent="5">5% (Brži rollout)</button>
+              <button type="button" class="btn-choice" data-percent="10">10%</button>
+              <button type="button" class="btn-choice" data-percent="100">100% (Svi kupci)</button>
             </div>
-            <small style="color: var(--text-muted); display: block; margin-top: 0.4rem;">
-              Promena stupa na snagu u roku od 5 minuta na svim Vercel Edge POP čvorovima.
-            </small>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+              Kupci iz Srbije se automatski raspodeljuju prema ovom procentu. Izbor se čuva u sesiji kupca.
+            </p>
           </div>
 
-          <!-- Remote Kill Switch -->
           <div class="control-group">
-            <label class="control-label">Glavni prekidač (Remote Kill-Switch):</label>
-            <div class="toggle-row">
+            <label class="control-label">Glavni prekidač sistema (Kill-Switch):</label>
+            <div class="toggle-item">
               <div>
-                <strong>Smart Deferral optimizacija</strong>
-                <div style="font-size: 0.8rem; color: var(--text-muted);">Isključuje odlaganje skripti bez skidanja taga iz admina.</div>
+                <strong>Optimizacija aktivna</strong>
+                <div style="font-size: 12px; color: var(--text-muted);">Isključuje sva odlaganja i vraća originalno učitavanje bez diranja admin koda.</div>
               </div>
-              <input type="checkbox" id="killSwitchCheckbox" style="transform: scale(1.4); cursor: pointer;">
+              <input type="checkbox" id="killSwitchCheckbox" style="transform: scale(1.2); cursor: pointer;">
             </div>
           </div>
         </div>
 
         <div>
-          <!-- Vendor Selection -->
           <div class="control-group">
-            <label class="control-label">Odloženo učitavanje po trackerima (Smart Deferral):</label>
-            <div class="toggle-row">
-              <span>Meta Pixel (fbevents.js)</span>
-              <input type="checkbox" id="vendorMeta" checked style="transform: scale(1.3); cursor: pointer;">
+            <label class="control-label">Uključeni marketinški trackeri za odlaganje:</label>
+            <div class="toggle-item">
+              <span>Meta Pixel (Facebook & Instagram)</span>
+              <input type="checkbox" id="vendorMeta" checked style="transform: scale(1.2); cursor: pointer;">
             </div>
-            <div class="toggle-row">
-              <span>Google Tag Manager / GA4 (gtm.js)</span>
-              <input type="checkbox" id="vendorGtm" checked style="transform: scale(1.3); cursor: pointer;">
+            <div class="toggle-item">
+              <span>Google Tag Manager / GA4</span>
+              <input type="checkbox" id="vendorGtm" checked style="transform: scale(1.2); cursor: pointer;">
             </div>
-            <div class="toggle-row">
-              <span>TikTok Pixel (analytics.tiktok.com)</span>
-              <input type="checkbox" id="vendorTiktok" checked style="transform: scale(1.3); cursor: pointer;">
+            <div class="toggle-item">
+              <span>TikTok Pixel</span>
+              <input type="checkbox" id="vendorTiktok" checked style="transform: scale(1.2); cursor: pointer;">
             </div>
           </div>
 
-          <button type="button" class="btn-save" id="saveConfigBtn">Sačuvaj i primeni izmene</button>
+          <button type="button" class="btn-primary" id="saveBtn">Sačuvaj konfiguraciju</button>
         </div>
       </div>
     </div>
 
-    <!-- 3. LIVE SESSIONS & ERROR TELEMETRY -->
-    <div class="card">
-      <div class="section-title">
-        <span>Live Telemetrija i Greške</span>
-        <button class="btn-sm" id="refreshBtn">⟳ Osveži podatke</button>
+    <!-- 3. TELEMETRY LOG -->
+    <div class="section-box">
+      <div class="section-header">
+        <div class="section-title">Nadzor dolaznih sesija i grešaka u realnom vremenu</div>
+        <button class="btn-secondary" id="refreshTelemetryBtn" style="font-size: 12px;">Osveži</button>
       </div>
-      <div style="overflow-x: auto;">
+      <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>Vreme</th>
-              <th>Zemlja</th>
+              <th>Lokacija</th>
               <th>Kohorta</th>
-              <th>Blokiranje niti</th>
-              <th>Eventi</th>
+              <th>Odziv / Blokiranje</th>
+              <th>Baferovano</th>
               <th>Greške</th>
-              <th>URL</th>
+              <th>Stranica</th>
             </tr>
           </thead>
           <tbody id="telemetryTableBody">
             <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted);">Učitavanje telemetrije...</td>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                Učitavanje telemetrije...
+              </td>
             </tr>
           </tbody>
         </table>
@@ -361,74 +353,66 @@
 
   <script>
     let currentStoreId = 'volimsvojdom';
-    let storesCache = [];
-    let activePercent = 1;
+    let stores = [];
+    let selectedPercent = 1;
 
-    async function loadAdminData() {
+    async function loadAdmin() {
       try {
         const authRes = await fetch('/api/auth/me');
         if (!authRes.ok) { window.location.href = '/login'; return; }
         const authData = await authRes.json();
-        if (authData.user.role !== 'ADMIN') {
-          window.location.href = '/dashboard';
-          return;
-        }
-        document.getElementById('userGreeting').textContent = authData.user.name || authData.user.email;
+        if (authData.user.role !== 'ADMIN') { window.location.href = '/dashboard'; return; }
+        document.getElementById('userGreeting').textContent = authData.user.email;
 
-        // Fetch stores
         const res = await fetch('/api/admin/stores');
-        if (!res.ok) throw new Error('Greška pri dohvatanju prodavnica');
+        if (!res.ok) throw new Error('Greška pri učitavanju');
         const data = await res.json();
-        storesCache = data.stores;
+        stores = data.stores;
 
-        renderStoresTable();
-        selectStore(currentStoreId);
-        loadStoreTelemetry(currentStoreId);
+        renderStores();
+        pickStore(currentStoreId);
       } catch (err) {
         console.error(err);
       }
     }
 
-    function renderStoresTable() {
+    function renderStores() {
       const tbody = document.getElementById('storesTableBody');
-      tbody.innerHTML = storesCache.map(s => `
-        <tr>
-          <td><strong>${s.name}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${s.domain}</div></td>
+      tbody.innerHTML = stores.map(s => `
+        <tr class="${s.id === currentStoreId ? 'selected' : ''}">
+          <td><strong>${s.name}</strong><div style="font-size:11px;color:var(--text-muted);">${s.domain}</div></td>
           <td>${s.platform}</td>
-          <td><span class="badge ${s.status === 'live' ? 'badge-live' : (s.status === 'pilot' ? 'badge-pilot' : 'badge-issue')}">● ${s.status.toUpperCase()}</span></td>
+          <td><span class="tag ${s.status === 'live' ? 'tag-live' : 'tag-pilot'}">${s.status.toUpperCase()}</span></td>
           <td><strong>${s.canaryPercent}%</strong></td>
-          <td><span style="color:${s.totalErrors === 0 ? '#10b981' : '#ef4444'};">${s.totalErrors || 0}</span></td>
-          <td><span style="color:#10b981;">✓ Healthy</span></td>
-          <td><button class="btn-sm" onclick="selectStore('${s.id}')">Upravljaj</button></td>
+          <td>${s.totalErrors === 0 ? '<span style="color:var(--success);font-weight:600;">0</span>' : '<span style="color:var(--danger);font-weight:600;">' + s.totalErrors + '</span>'}</td>
+          <td><span style="color:var(--success);font-weight:600;">✓ Ispravno</span></td>
+          <td><button class="btn-sm" onclick="pickStore('${s.id}')">Podesi</button></td>
         </tr>
       `).join('');
     }
 
-    function selectStore(storeId) {
+    function pickStore(storeId) {
       currentStoreId = storeId;
-      const store = storesCache.find(s => s.id === storeId);
-      if (!store) return;
+      const s = stores.find(x => x.id === storeId);
+      if (!s) return;
 
-      document.getElementById('selectedStoreName').textContent = store.name;
-      activePercent = store.canaryPercent;
+      document.getElementById('activeStoreHeading').textContent = s.name;
+      selectedPercent = s.canaryPercent;
 
-      // Update canary buttons
-      document.querySelectorAll('#canaryButtonGroup .btn-option').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.percent, 10) === activePercent);
+      document.querySelectorAll('#canaryGroup .btn-choice').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.percent, 10) === selectedPercent);
       });
 
-      // Update kill switch
-      document.getElementById('killSwitchCheckbox').checked = !store.killSwitch;
+      document.getElementById('killSwitchCheckbox').checked = !s.killSwitch;
+      document.getElementById('vendorMeta').checked = s.vendors.meta;
+      document.getElementById('vendorGtm').checked = s.vendors.gtm;
+      document.getElementById('vendorTiktok').checked = s.vendors.tiktok;
 
-      // Update vendors
-      document.getElementById('vendorMeta').checked = store.vendors.meta;
-      document.getElementById('vendorGtm').checked = store.vendors.gtm;
-      document.getElementById('vendorTiktok').checked = store.vendors.tiktok;
-
-      loadStoreTelemetry(storeId);
+      loadTelemetry(storeId);
+      renderStores();
     }
 
-    async function loadStoreTelemetry(storeId) {
+    async function loadTelemetry(storeId) {
       const tbody = document.getElementById('telemetryTableBody');
       try {
         const res = await fetch(`/api/admin/stores/${storeId}`);
@@ -437,49 +421,47 @@
         const sessions = data.metrics.recentSessions || [];
 
         if (sessions.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Nema zabeleženih sesija.</td></tr>';
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">Nema nedavnih unosa telemetrije.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = sessions.slice(0, 20).map(s => `
+        tbody.innerHTML = sessions.slice(0, 25).map(s => `
           <tr>
-            <td>${new Date(s.timestamp).toLocaleTimeString()}</td>
+            <td style="color:var(--text-muted);">${new Date(s.timestamp).toLocaleTimeString()}</td>
             <td><strong>${s.country || 'RS'}</strong></td>
             <td><code>${s.cohort}</code></td>
             <td>${s.longTaskBlockingMs || 0} ms</td>
             <td>${s.eventsBuffered || 0}</td>
-            <td>${s.errorsCount === 0 ? '<span style="color:#10b981;">0</span>' : '<span style="color:#ef4444;">' + s.errorsCount + '</span>'}</td>
-            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.url}">${s.url}</td>
+            <td>${s.errorsCount === 0 ? '<span style="color:var(--success);">0</span>' : '<span style="color:var(--danger);font-weight:bold;">' + s.errorsCount + '</span>'}</td>
+            <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.url}">${s.url}</td>
           </tr>
         `).join('');
-      } catch (e) {
-        console.error(e);
+      } catch (err) {
+        console.error(err);
       }
     }
 
-    // Handle Canary button clicks
-    document.getElementById('canaryButtonGroup').addEventListener('click', (e) => {
+    document.getElementById('canaryGroup').addEventListener('click', (e) => {
       if (e.target.dataset.percent !== undefined) {
-        activePercent = parseInt(e.target.dataset.percent, 10);
-        document.querySelectorAll('#canaryButtonGroup .btn-option').forEach(btn => {
-          btn.classList.toggle('active', btn === e.target);
+        selectedPercent = parseInt(e.target.dataset.percent, 10);
+        document.querySelectorAll('#canaryGroup .btn-choice').forEach(b => {
+          b.classList.toggle('active', b === e.target);
         });
       }
     });
 
-    // Save button
-    document.getElementById('saveConfigBtn').addEventListener('click', async () => {
-      const saveBtn = document.getElementById('saveConfigBtn');
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Čuvanje...';
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.textContent = 'Čuvanje...';
 
       const payload = {
-        canaryPercent: activePercent,
+        canaryPercent: selectedPercent,
         killSwitch: !document.getElementById('killSwitchCheckbox').checked,
         vendors: {
           meta: document.getElementById('vendorMeta').checked,
           gtm: document.getElementById('vendorGtm').checked,
-          tiktok: document.getElementById('vendorTiktok').checked,
+          tiktok: document.getElementById('vendorTiktok').checked
         }
       };
 
@@ -490,29 +472,28 @@
           body: JSON.stringify(payload)
         });
         if (!res.ok) throw new Error('Neuspešno čuvanje');
-        
+
         const toast = document.getElementById('saveToast');
         toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 4000);
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
 
-        // Update local cache
-        const s = storesCache.find(x => x.id === currentStoreId);
-        if (s) {
-          s.canaryPercent = payload.canaryPercent;
-          s.killSwitch = payload.killSwitch;
-          s.vendors = payload.vendors;
+        const store = stores.find(x => x.id === currentStoreId);
+        if (store) {
+          store.canaryPercent = payload.canaryPercent;
+          store.killSwitch = payload.killSwitch;
+          store.vendors = payload.vendors;
         }
-        renderStoresTable();
+        renderStores();
       } catch (err) {
-        alert('Greška pri čuvanju podešavanja: ' + err.message);
+        alert('Greška pri čuvanju: ' + err.message);
       } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Sačuvaj i primeni izmene';
+        btn.disabled = false;
+        btn.textContent = 'Sačuvaj konfiguraciju';
       }
     });
 
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      loadStoreTelemetry(currentStoreId);
+    document.getElementById('refreshTelemetryBtn').addEventListener('click', () => {
+      loadTelemetry(currentStoreId);
     });
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
@@ -521,7 +502,7 @@
       window.location.href = '/login';
     });
 
-    loadAdminData();
+    loadAdmin();
   </script>
 </body>
 </html>
