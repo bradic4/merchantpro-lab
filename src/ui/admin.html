@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Operacije | MerchantPro Lab</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #121826;
+      --card-border: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #fff;
+    }
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .admin-pill {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: #f87171;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 0.5rem;
+    }
+    .user-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.85rem;
+    }
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .btn-logout:hover { color: var(--text-main); border-color: var(--text-muted); }
+    main {
+      flex: 1;
+      max-width: 1300px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-live {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      color: #34d399;
+    }
+    .badge-pilot {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--accent);
+      color: #7dd3fc;
+    }
+    .badge-issue {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: #f87171;
+    }
+    .btn-sm {
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .btn-sm:hover { background: var(--accent); color: #090d16; border-color: var(--accent); }
+    .control-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 900px) {
+      .control-panel { grid-template-columns: 1fr; }
+    }
+    .control-group {
+      margin-bottom: 1.25rem;
+    }
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-option {
+      padding: 0.6rem 1rem;
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-option.active {
+      background: var(--accent);
+      color: #090d16;
+      border-color: var(--accent);
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #090d16;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+    .btn-save {
+      background: var(--accent);
+      color: #090d16;
+      padding: 0.85rem 1.5rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 1rem;
+      width: 100%;
+      font-size: 0.95rem;
+    }
+    .btn-save:hover { background: var(--accent-hover); }
+    .toast {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--success);
+      color: #34d399;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">M</div>
+      <div class="brand-title">MerchantPro Lab</div>
+      <span class="admin-pill">ADMIN / OPERATOR</span>
+    </div>
+    <div class="user-nav">
+      <span id="userGreeting">Admin</span>
+      <button class="btn-logout" id="logoutBtn">Odjava</button>
+    </div>
+  </header>
+
+  <main>
+    <div id="saveToast" class="toast">Podešavanja su uspešno ažurirana na Edge runtime-u!</div>
+
+    <!-- 1. STORES OVERSIGHT TABLE -->
+    <div class="card">
+      <div class="section-title">
+        <span>Aktivne prodavnice i klijenti</span>
+        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">Sistem: v0.3.0</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Prodavnica</th>
+              <th>Platforma</th>
+              <th>Status</th>
+              <th>Canary %</th>
+              <th>Greške</th>
+              <th>Tracking</th>
+              <th>Akcije</th>
+            </tr>
+          </thead>
+          <tbody id="storesTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted);">Učitavanje prodavnica...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. REMOTE CONTROL ROOM -->
+    <div class="card">
+      <div class="section-title">
+        <span>Kontrolni panel za prodavnicu: <strong id="selectedStoreName" style="color: var(--accent);">VolimSvojDom.rs</strong></span>
+      </div>
+
+      <div class="control-panel">
+        <div>
+          <!-- Canary Ladder -->
+          <div class="control-group">
+            <label class="control-label">Domaći (RS) Canary Rollout procenat:</label>
+            <div class="button-group" id="canaryButtonGroup">
+              <button type="button" class="btn-option" data-percent="0">0% (Baseline)</button>
+              <button type="button" class="btn-option" data-percent="1">1% (Safe)</button>
+              <button type="button" class="btn-option" data-percent="5">5% (Fast)</button>
+              <button type="button" class="btn-option" data-percent="10">10%</button>
+              <button type="button" class="btn-option" data-percent="100">100% (Full)</button>
+            </div>
+            <small style="color: var(--text-muted); display: block; margin-top: 0.4rem;">
+              Promena stupa na snagu u roku od 5 minuta na svim Vercel Edge POP čvorovima.
+            </small>
+          </div>
+
+          <!-- Remote Kill Switch -->
+          <div class="control-group">
+            <label class="control-label">Glavni prekidač (Remote Kill-Switch):</label>
+            <div class="toggle-row">
+              <div>
+                <strong>Smart Deferral optimizacija</strong>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Isključuje odlaganje skripti bez skidanja taga iz admina.</div>
+              </div>
+              <input type="checkbox" id="killSwitchCheckbox" style="transform: scale(1.4); cursor: pointer;">
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <!-- Vendor Selection -->
+          <div class="control-group">
+            <label class="control-label">Odloženo učitavanje po trackerima (Smart Deferral):</label>
+            <div class="toggle-row">
+              <span>Meta Pixel (fbevents.js)</span>
+              <input type="checkbox" id="vendorMeta" checked style="transform: scale(1.3); cursor: pointer;">
+            </div>
+            <div class="toggle-row">
+              <span>Google Tag Manager / GA4 (gtm.js)</span>
+              <input type="checkbox" id="vendorGtm" checked style="transform: scale(1.3); cursor: pointer;">
+            </div>
+            <div class="toggle-row">
+              <span>TikTok Pixel (analytics.tiktok.com)</span>
+              <input type="checkbox" id="vendorTiktok" checked style="transform: scale(1.3); cursor: pointer;">
+            </div>
+          </div>
+
+          <button type="button" class="btn-save" id="saveConfigBtn">Sačuvaj i primeni izmene</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. LIVE SESSIONS & ERROR TELEMETRY -->
+    <div class="card">
+      <div class="section-title">
+        <span>Live Telemetrija i Greške</span>
+        <button class="btn-sm" id="refreshBtn">⟳ Osveži podatke</button>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Vreme</th>
+              <th>Zemlja</th>
+              <th>Kohorta</th>
+              <th>Blokiranje niti</th>
+              <th>Eventi</th>
+              <th>Greške</th>
+              <th>URL</th>
+            </tr>
+          </thead>
+          <tbody id="telemetryTableBody">
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted);">Učitavanje telemetrije...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentStoreId = 'volimsvojdom';
+    let storesCache = [];
+    let activePercent = 1;
+
+    async function loadAdminData() {
+      try {
+        const authRes = await fetch('/api/auth/me');
+        if (!authRes.ok) { window.location.href = '/login'; return; }
+        const authData = await authRes.json();
+        if (authData.user.role !== 'ADMIN') {
+          window.location.href = '/dashboard';
+          return;
+        }
+        document.getElementById('userGreeting').textContent = authData.user.name || authData.user.email;
+
+        // Fetch stores
+        const res = await fetch('/api/admin/stores');
+        if (!res.ok) throw new Error('Greška pri dohvatanju prodavnica');
+        const data = await res.json();
+        storesCache = data.stores;
+
+        renderStoresTable();
+        selectStore(currentStoreId);
+        loadStoreTelemetry(currentStoreId);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderStoresTable() {
+      const tbody = document.getElementById('storesTableBody');
+      tbody.innerHTML = storesCache.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong><div style="font-size:0.75rem;color:var(--text-muted);">${s.domain}</div></td>
+          <td>${s.platform}</td>
+          <td><span class="badge ${s.status === 'live' ? 'badge-live' : (s.status === 'pilot' ? 'badge-pilot' : 'badge-issue')}">● ${s.status.toUpperCase()}</span></td>
+          <td><strong>${s.canaryPercent}%</strong></td>
+          <td><span style="color:${s.totalErrors === 0 ? '#10b981' : '#ef4444'};">${s.totalErrors || 0}</span></td>
+          <td><span style="color:#10b981;">✓ Healthy</span></td>
+          <td><button class="btn-sm" onclick="selectStore('${s.id}')">Upravljaj</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function selectStore(storeId) {
+      currentStoreId = storeId;
+      const store = storesCache.find(s => s.id === storeId);
+      if (!store) return;
+
+      document.getElementById('selectedStoreName').textContent = store.name;
+      activePercent = store.canaryPercent;
+
+      // Update canary buttons
+      document.querySelectorAll('#canaryButtonGroup .btn-option').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.percent, 10) === activePercent);
+      });
+
+      // Update kill switch
+      document.getElementById('killSwitchCheckbox').checked = !store.killSwitch;
+
+      // Update vendors
+      document.getElementById('vendorMeta').checked = store.vendors.meta;
+      document.getElementById('vendorGtm').checked = store.vendors.gtm;
+      document.getElementById('vendorTiktok').checked = store.vendors.tiktok;
+
+      loadStoreTelemetry(storeId);
+    }
+
+    async function loadStoreTelemetry(storeId) {
+      const tbody = document.getElementById('telemetryTableBody');
+      try {
+        const res = await fetch(`/api/admin/stores/${storeId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const sessions = data.metrics.recentSessions || [];
+
+        if (sessions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Nema zabeleženih sesija.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = sessions.slice(0, 20).map(s => `
+          <tr>
+            <td>${new Date(s.timestamp).toLocaleTimeString()}</td>
+            <td><strong>${s.country || 'RS'}</strong></td>
+            <td><code>${s.cohort}</code></td>
+            <td>${s.longTaskBlockingMs || 0} ms</td>
+            <td>${s.eventsBuffered || 0}</td>
+            <td>${s.errorsCount === 0 ? '<span style="color:#10b981;">0</span>' : '<span style="color:#ef4444;">' + s.errorsCount + '</span>'}</td>
+            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.url}">${s.url}</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Handle Canary button clicks
+    document.getElementById('canaryButtonGroup').addEventListener('click', (e) => {
+      if (e.target.dataset.percent !== undefined) {
+        activePercent = parseInt(e.target.dataset.percent, 10);
+        document.querySelectorAll('#canaryButtonGroup .btn-option').forEach(btn => {
+          btn.classList.toggle('active', btn === e.target);
+        });
+      }
+    });
+
+    // Save button
+    document.getElementById('saveConfigBtn').addEventListener('click', async () => {
+      const saveBtn = document.getElementById('saveConfigBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Čuvanje...';
+
+      const payload = {
+        canaryPercent: activePercent,
+        killSwitch: !document.getElementById('killSwitchCheckbox').checked,
+        vendors: {
+          meta: document.getElementById('vendorMeta').checked,
+          gtm: document.getElementById('vendorGtm').checked,
+          tiktok: document.getElementById('vendorTiktok').checked,
+        }
+      };
+
+      try {
+        const res = await fetch(`/api/admin/stores/${currentStoreId}/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Neuspešno čuvanje');
+        
+        const toast = document.getElementById('saveToast');
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 4000);
+
+        // Update local cache
+        const s = storesCache.find(x => x.id === currentStoreId);
+        if (s) {
+          s.canaryPercent = payload.canaryPercent;
+          s.killSwitch = payload.killSwitch;
+          s.vendors = payload.vendors;
+        }
+        renderStoresTable();
+      } catch (err) {
+        alert('Greška pri čuvanju podešavanja: ' + err.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Sačuvaj i primeni izmene';
+      }
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadStoreTelemetry(currentStoreId);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('sd_token');
+      window.location.href = '/login';
+    });
+
+    loadAdminData();
+  </script>
+</body>
+</html>

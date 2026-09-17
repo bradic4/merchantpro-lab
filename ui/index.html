@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MerchantPro Lab — Kontrolni Panel</title>
+  <style>
+    :root {
+      --ms-bg: #f8f9fa;
+      --ms-surface: #ffffff;
+      --ms-border: #d1d5db;
+      --ms-border-subtle: #e5e7eb;
+      --ms-text: #1f2937;
+      --ms-text-secondary: #4b5563;
+      --ms-text-muted: #6b7280;
+      --ms-blue: #0067b8;
+      --ms-blue-hover: #005da6;
+      --ms-blue-light: #eff6fc;
+      --ms-green: #107c41;
+      --ms-red: #a80000;
+      --ms-amber: #b45309;
+      --font-stack: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-stack);
+      background-color: var(--ms-bg);
+      color: var(--ms-text);
+      line-height: 1.5;
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Corporate Header */
+    header {
+      background: var(--ms-surface);
+      border-bottom: 1px solid var(--ms-border);
+      padding: 0 2rem;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 54px;
+      border-bottom: 1px solid var(--ms-border-subtle);
+    }
+    .brand {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+    }
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--ms-text);
+      letter-spacing: -0.01em;
+    }
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--ms-text-muted);
+      border-left: 1px solid var(--ms-border);
+      padding-left: 0.75rem;
+    }
+    .system-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--ms-green);
+      background: #e6f4ea;
+      padding: 0.2rem 0.5rem;
+      border-radius: 2px;
+      border: 1px solid #c2e7c9;
+    }
+
+    /* Horizontal Corporate Navigation (Microsoft Tab Style) */
+    nav {
+      display: flex;
+      gap: 0.25rem;
+      margin-top: -1px;
+    }
+    .nav-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--ms-text-secondary);
+      padding: 0.8rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-tab:hover {
+      color: var(--ms-blue);
+    }
+    .nav-tab.active {
+      color: var(--ms-blue);
+      border-bottom: 2px solid var(--ms-blue);
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Corporate Panel / Card */
+    .panel {
+      background: var(--ms-surface);
+      border: 1px solid var(--ms-border);
+      border-radius: 4px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .panel-header {
+      border-bottom: 1px solid var(--ms-border-subtle);
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--ms-text);
+    }
+    .panel-desc {
+      font-size: 0.85rem;
+      color: var(--ms-text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--ms-text-secondary);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    input[type="text"], input[type="password"], select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--ms-text);
+      background: var(--ms-surface);
+      border: 1px solid var(--ms-border);
+      border-radius: 3px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, select:focus {
+      outline: none;
+      border-color: var(--ms-blue);
+      box-shadow: 0 0 0 2px rgba(0, 103, 184, 0.2);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 1.25rem;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 3px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-primary {
+      background-color: var(--ms-blue);
+      color: #ffffff;
+      border-color: var(--ms-blue);
+    }
+    .btn-primary:hover {
+      background-color: var(--ms-blue-hover);
+      border-color: var(--ms-blue-hover);
+    }
+    .btn-secondary {
+      background-color: #ffffff;
+      color: var(--ms-text);
+      border-color: var(--ms-border);
+    }
+    .btn-secondary:hover {
+      background-color: #f3f4f6;
+      border-color: #9ca3af;
+    }
+
+    /* Corporate Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: var(--ms-surface);
+    }
+    th {
+      background: #f9fafb;
+      color: var(--ms-text-secondary);
+      font-weight: 600;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-top: 1px solid var(--ms-border-subtle);
+      border-bottom: 1px solid var(--ms-border);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    td {
+      padding: 0.7rem 0.85rem;
+      border-bottom: 1px solid var(--ms-border-subtle);
+      color: var(--ms-text);
+      vertical-align: middle;
+    }
+    tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* KPI Metrics Cards */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-box {
+      background: var(--ms-surface);
+      border: 1px solid var(--ms-border);
+      border-radius: 3px;
+      padding: 1rem;
+      border-left: 4px solid var(--ms-border);
+    }
+    .kpi-box.primary { border-left-color: var(--ms-blue); }
+    .kpi-box.good { border-left-color: var(--ms-green); }
+    .kpi-box.warning { border-left-color: var(--ms-amber); }
+    .kpi-box.danger { border-left-color: var(--ms-red); }
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--ms-text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .kpi-value {
+      font-size: 1.7rem;
+      font-weight: 700;
+      color: var(--ms-text);
+      margin: 0.25rem 0;
+    }
+    .kpi-sub {
+      font-size: 0.75rem;
+      color: var(--ms-text-secondary);
+    }
+
+    /* Code Block */
+    .code-wrapper {
+      position: relative;
+      margin-top: 0.5rem;
+    }
+    pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 0.85rem;
+      border-radius: 3px;
+      font-family: Consolas, 'Courier New', monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      line-height: 1.4;
+    }
+    .copy-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255,255,255,0.15);
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 2px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .copy-button:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Status Tags */
+    .tag {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+    .tag-neutral { background: #e5e7eb; color: #374151; }
+    .tag-good { background: #dcfce7; color: #15803d; }
+    .tag-warning { background: #fef3c7; color: #b45309; }
+    .tag-danger { background: #fee2e2; color: #b91c1c; }
+    .tag-info { background: #dbeafe; color: #1d4ed8; }
+
+    /* Drop Zone */
+    .dropzone {
+      border: 2px dashed #9ca3af;
+      border-radius: 4px;
+      padding: 2.5rem;
+      text-align: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .dropzone:hover {
+      background: #f3f4f6;
+      border-color: var(--ms-blue);
+    }
+
+    /* Loading indicator */
+    .spinner {
+      border: 3px solid rgba(0,0,0,0.1);
+      border-top-color: var(--ms-blue);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <span class="brand-title">MerchantPro Lab</span>
+        <span class="brand-subtitle">Alat za tehničku analizu i optimizaciju e-commerce sajtova</span>
+      </div>
+      <div>
+        <span class="system-badge">Sistem aktivan · Lokalni server</span>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-tab active" onclick="switchTab('tab-audit')">Analizator stranice</button>
+      <button class="nav-tab" onclick="switchTab('tab-stores')">Sačuvana merenja</button>
+      <button class="nav-tab" onclick="switchTab('tab-images')">Optimizacija slika</button>
+      <button class="nav-tab" onclick="switchTab('tab-delivery')">Responsive &amp; Skripte</button>
+      <button class="nav-tab" onclick="switchTab('tab-api')">MerchantPro API</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- TAB 1: REAL-TIME AUDITOR -->
+    <div id="tab-audit" class="tab-pane active">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Pokretanje analize stranice u realnom vremenu</div>
+            <div class="panel-desc">Alat pokreće lokalni Chrome headless proces, izvršava Lighthouse reviziju i prikuplja stvarne mrežne podatke.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;align-items:flex-end;">
+          <div style="flex:1;">
+            <label for="input-url">Adresa stranice (URL):</label>
+            <input type="text" id="input-url" placeholder="https://www.domen.rs" value="https://www.kliklak.rs/">
+          </div>
+          <div style="width:160px;">
+            <label for="select-device">Profil uređaja:</label>
+            <select id="select-device">
+              <option value="mobile">Mobilni (Mobilna mreža)</option>
+              <option value="desktop">Desktop (Računar)</option>
+            </select>
+          </div>
+          <button id="btn-submit-audit" class="btn btn-primary" style="height:38px;" onclick="executeAudit()">
+            Pokreni analizu
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="audit-spinner" class="panel" style="display:none;text-align:center;padding:3rem;">
+        <div class="spinner"></div>
+        <div style="font-weight:600;margin-top:1rem;color:var(--ms-text);">Izvršavanje testa u toku...</div>
+        <div style="font-size:0.85rem;color:var(--ms-text-muted);margin-top:0.25rem;">
+          Navigacija stranice, snimanje mrežnih zahteva i kalkulacija metrika (uobičajeno traje 20 do 30 sekundi).
+        </div>
+      </div>
+
+      <!-- Live Audit Results -->
+      <div id="audit-results-container" style="display:none;">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title" id="out-target-url">---</div>
+              <div class="panel-desc" id="out-target-meta">---</div>
+            </div>
+            <div>
+              <span class="tag tag-neutral" id="out-score-tag">Ocena: --</span>
+            </div>
+          </div>
+
+          <div class="kpi-row">
+            <div class="kpi-box primary">
+              <div class="kpi-label">Performance skor</div>
+              <div class="kpi-value" id="out-perf-score">--</div>
+              <div class="kpi-sub">od 100 poena</div>
+            </div>
+            <div class="kpi-box" id="kpi-lcp-box">
+              <div class="kpi-label">LCP (Glavni sadržaj)</div>
+              <div class="kpi-value" id="out-lcp">--</div>
+              <div class="kpi-sub">Cilj: &lt; 2.5 s</div>
+            </div>
+            <div class="kpi-box" id="kpi-tbt-box">
+              <div class="kpi-label">TBT (Kočenje procesora)</div>
+              <div class="kpi-value" id="out-tbt">--</div>
+              <div class="kpi-sub">Cilj: &lt; 300 ms</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-label">TTFB (Odziv servera)</div>
+              <div class="kpi-value" id="out-ttfb">--</div>
+              <div class="kpi-sub">Cilj: &lt; 200 ms</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-label">Bajtovi slika</div>
+              <div class="kpi-value" id="out-images-size">--</div>
+              <div class="kpi-sub" id="out-images-count">0 slika</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issues and Solutions -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Uočene prepreke za brzinu i preporučena rešenja</div>
+              <div class="panel-desc">Konkretni tehnički zahvati na šablonu ili katalogu koji donose najveći efekat.</div>
+            </div>
+          </div>
+          <div id="issues-list" class="grid-2"></div>
+        </div>
+
+        <!-- Images Table -->
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">Mrežni resursi: Slike preuzete pri učitavanju</div>
+              <div class="panel-desc">Lista stvarnih slika preuzetih od strane klijenta, sortirana po redosledu zahteva.</div>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>URL Resursa</th>
+                  <th>Format</th>
+                  <th>Veličina</th>
+                  <th>Uloga u prikazu</th>
+                </tr>
+              </thead>
+              <tbody id="audit-images-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: STORE BENCHMARKS -->
+    <div id="tab-stores" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Rezultati prethodnih merenja iz baze</div>
+            <div class="panel-desc">Podaci agregirani iz sačuvanih sesija u folderu <code>data/</code>.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="fetchStoredBenchmarks()">Osveži tabelu</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Prodavnica</th>
+                <th>Platforma</th>
+                <th>Uloga</th>
+                <th>Ocena</th>
+                <th>LCP</th>
+                <th>TBT</th>
+                <th>TTFB</th>
+                <th>Slike</th>
+                <th>Ukupno prenosa</th>
+                <th>Merenja</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarks-tbody">
+              <tr><td colspan="10" style="text-align:center;color:var(--ms-text-muted);">Učitavanje podataka...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Add Store Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Dodavanje nove prodavnice u evidenciju</div>
+            <div class="panel-desc">Dodaje novi e-commerce sajt u datoteku <code>data/manifest-sr.json</code> za praćenje.</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="new-store-name">Naziv sajta / prodavnice:</label>
+            <input type="text" id="new-store-name" placeholder="npr. Tehnomedija">
+          </div>
+          <div class="form-group">
+            <label for="new-store-origin">Početni URL (Origin):</label>
+            <input type="text" id="new-store-origin" placeholder="https://www.tehnomedija.rs">
+          </div>
+          <div class="form-group">
+            <label for="new-store-platform">Platforma:</label>
+            <select id="new-store-platform">
+              <option value="merchantpro">MerchantPro</option>
+              <option value="shopify">Shopify</option>
+              <option value="woocommerce">WooCommerce</option>
+              <option value="custom">Druga platforma (Custom)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="new-store-role">Uloga u analizi:</label>
+            <select id="new-store-role">
+              <option value="sample">Uzorak (MerchantPro sajt za analizu)</option>
+              <option value="control">Kontrolni sajt (Konkurencija)</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="submitNewStore()">Sačuvaj prodavnicu</button>
+      </div>
+    </div>
+
+    <!-- TAB 3: IMAGE OPTIMIZER -->
+    <div id="tab-images" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Lokalna obrada i optimizacija slika</div>
+            <div class="panel-desc">Konverzija i smanjenje fizičkih dimenzija slika bez gubitka vidljivog kvaliteta korišćenjem biblioteke Sharp.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:1.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+          <div style="flex:1;min-width:220px;">
+            <label for="select-profile">Profil dimenzija:</label>
+            <select id="select-profile">
+              <option value="medium">Medium (do 800px širine) — Kataloški prikaz</option>
+              <option value="thumb">Thumb (do 320px širine) — Kartica proizvoda</option>
+              <option value="large">Large (do 1600px širine) — Glavna fotografija</option>
+              <option value="banner">Banner (do 1200px širine) — Naslovni baneri</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:220px;">
+            <label for="select-format">Izlazni format:</label>
+            <select id="select-format">
+              <option value="webp">WebP (Optimalna kompresija, visoka podrška)</option>
+              <option value="avif">AVIF (Maksimalno smanjenje)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="dropzone" id="file-dropzone" onclick="document.getElementById('file-dialog').click()">
+          <input type="file" id="file-dialog" style="display:none" multiple accept="image/png, image/jpeg, image/webp" onchange="processSelectedFiles(this.files)">
+          <div style="font-weight:600;color:var(--ms-text);">Prevucite datoteke ovde ili kliknite za odabir</div>
+          <div style="font-size:0.8rem;color:var(--ms-text-muted);margin-top:0.25rem;">Podržani formati: PNG, JPEG, WebP. Fajlovi ostaju na vašem računaru.</div>
+        </div>
+      </div>
+
+      <div id="optimizer-batch-panel" class="panel" style="display:none;">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Rezultati kompresije</div>
+            <div class="panel-desc" id="batch-summary-text">---</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Naziv datoteke</th>
+                <th>Nove dimenzije</th>
+                <th>Pre</th>
+                <th>Posle</th>
+                <th>Ušteda</th>
+                <th>Radnja</th>
+              </tr>
+            </thead>
+            <tbody id="optimizer-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: MERCHANTPRO API -->
+    <div id="tab-api" class="tab-pane">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Povezivanje sa MerchantPro REST API servisom</div>
+            <div class="panel-desc">Direktna komunikacija sa nalogom prodavnice radi pregleda kataloga i masovne obrade.</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="api-origin">Domen prodavnice (Origin):</label>
+            <input type="text" id="api-origin" placeholder="https://www.prodavnica.rs">
+          </div>
+          <div class="form-group">
+            <label for="api-limit">Broj artikala za proveru:</label>
+            <input type="text" id="api-limit" value="20">
+          </div>
+          <div class="form-group">
+            <label for="api-username">API Korisničko ime (Username):</label>
+            <input type="text" id="api-username" placeholder="Unesite API korisničko ime">
+          </div>
+          <div class="form-group">
+            <label for="api-secret">API Tajni ključ (Secret):</label>
+            <input type="password" id="api-secret" placeholder="Unesite API secret">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="readCatalogViaApi()">Učitaj katalog</button>
+      </div>
+
+      <div id="api-catalog-panel" class="panel" style="display:none;">
+        <div class="panel-header">
+          <div class="panel-title">Artikli iz kataloga</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Naziv artikla</th>
+                <th>Broj slika</th>
+                <th>Glavna slika</th>
+              </tr>
+            </thead>
+            <tbody id="api-catalog-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: RESPONSIVE & SCRIPTS -->
+    <div id="tab-delivery" class="tab-pane">
+      <!-- Section 1: Responsive Image Delivery -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">1. Responsive isporuka slika (MerchantPro CDN)</div>
+            <div class="panel-desc">Analiza da li mobilni uređaji preuzimaju odgovarajuće dimenzije (/p/m/ umesto /p/l/), LCP preload status i lazy loading.</div>
+          </div>
+          <button class="btn btn-secondary" onclick="fetchDeliveryAudits()">Osveži analizu</button>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-box primary">
+            <div class="kpi-label">Ukupno slika na stranici</div>
+            <div class="kpi-value" id="resp-total-images">--</div>
+            <div class="kpi-sub" id="resp-mp-images">-- MerchantPro CDN</div>
+          </div>
+          <div class="kpi-box warning">
+            <div class="kpi-label">Uočeni propusti</div>
+            <div class="kpi-value" id="resp-issues-count">--</div>
+            <div class="kpi-sub">stavki za optimizaciju</div>
+          </div>
+          <div class="kpi-box good">
+            <div class="kpi-label">Procenjena ušteda na mobilnom</div>
+            <div class="kpi-value" id="resp-savings-kb">--</div>
+            <div class="kpi-sub">zamena /p/l/ sa /p/m/</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Resurs (URL)</th>
+                <th>Tip problema</th>
+                <th>Prioritet</th>
+                <th>Detalji i nalaz</th>
+                <th>Preporučeni zahvat</th>
+              </tr>
+            </thead>
+            <tbody id="resp-issues-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">Učitavanje podataka...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 2: Third-Party Scripts & CPU Impact -->
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">2. Eksterne skripte, vidžeti i CPU kočenje</div>
+            <div class="panel-desc">Detekcija chatbotova (npr. Elfsight), marketinških trackera i velikih JS paketa koji blokiraju procesor.</div>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-box primary">
+            <div class="kpi-label">Ukupno skripti</div>
+            <div class="kpi-value" id="script-total-count">--</div>
+            <div class="kpi-sub" id="script-3rd-count">-- eksternih</div>
+          </div>
+          <div class="kpi-box warning">
+            <div class="kpi-label">Eksterni JS prenos</div>
+            <div class="kpi-value" id="script-3rd-bytes">--</div>
+            <div class="kpi-sub">third-party kod</div>
+          </div>
+          <div class="kpi-box danger">
+            <div class="kpi-label">CPU vreme na glavnoj niti</div>
+            <div class="kpi-value" id="script-cpu-ms">--</div>
+            <div class="kpi-sub">izvršavanje skripti</div>
+          </div>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Skripta / Domen</th>
+                <th>Kategorija</th>
+                <th>Prioritet</th>
+                <th>Veličina</th>
+                <th>CPU vreme</th>
+                <th>Preporučeni zahvat</th>
+              </tr>
+            </thead>
+            <tbody id="script-issues-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">Učitavanje podataka...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+
+      if (tabId === 'tab-stores') fetchStoredBenchmarks();
+      if (tabId === 'tab-delivery') fetchDeliveryAudits();
+    }
+
+    function copySnippet(button) {
+      const code = button.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code);
+      const originalText = button.innerText;
+      button.innerText = 'Kopirano';
+      setTimeout(() => button.innerText = originalText, 2000);
+    }
+
+    // 1. LIVE AUDITOR
+    async function executeAudit() {
+      const url = document.getElementById('input-url').value.trim();
+      const device = document.getElementById('select-device').value;
+      const button = document.getElementById('btn-submit-audit');
+      if (!url) return alert('Unesite URL.');
+      button.disabled = true;
+      try {
+        const response = await apiFetch('/api/audit/run', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,device})});
+        const job = await response.json();
+        if (!response.ok) throw new Error(job.error);
+        await refreshJobs();
+      } catch(e) { alert(e.message); }
+      finally { button.disabled = false; }
+    }
+    let refreshingJobs = false;
+    async function refreshJobs() {
+      if (refreshingJobs) return;
+      refreshingJobs = true;
+      const container = document.getElementById('job-history');
+      const names = {queued:'Čeka',running:'Merenje u toku',succeeded:'Završena',failed:'Neuspela',interrupted:'Prekinuta',cancelled:'Otkazana'};
+      try {
+        const response = await apiFetch('/api/jobs');
+        if (!response.ok) throw new Error('Istorija trenutno nije dostupna.');
+        const {jobs} = await response.json();
+        container.replaceChildren();
+        if (!jobs.length) container.textContent = 'Još nema analiza u redu. Ranija merenja su u kartici Sačuvana merenja.';
+        for (const job of jobs) {
+          const row = document.createElement('div');
+          row.style.cssText = 'padding:12px 0;border-bottom:1px solid #ddd;overflow-wrap:anywhere';
+          const label = document.createElement('div');
+          label.textContent = `${names[job.status] || job.status} · ${job.device} · ${job.url} · ${new Date(job.createdAt).toLocaleString()} · ${job.id}`;
+          row.append(label);
+          if (job.error) { const error = document.createElement('div'); error.textContent = job.error; row.append(error); }
+          const action = job.status === 'succeeded' ? 'result' : job.status === 'queued' ? 'cancel' : ['failed','interrupted','cancelled'].includes(job.status) ? 'retry' : null;
+          if (action) {
+            const button = document.createElement('button'); button.className = 'btn btn-secondary';
+            button.textContent = {result:'Otvori rezultat',cancel:'Otkaži',retry:'Ponovi kao novu analizu'}[action];
+            button.onclick = async () => {
+              button.disabled = true;
+              try {
+                const r = await apiFetch(`/api/jobs/${encodeURIComponent(job.id)}/${action}`,{method:action === 'result' ? 'GET' : 'POST'});
+                const data = await r.json(); if (!r.ok) throw new Error(data.error);
+                if (action === 'result') displayAuditResults(data);
+                else await refreshJobs();
+              } catch(e) { alert(e.message); }
+              finally { button.disabled = false; }
+            };
+            row.append(button);
+          }
+          container.append(row);
+        }
+      } catch(e) { container.textContent = e.message + ' Ponovni pokušaj za nekoliko sekundi.'; }
+      finally { refreshingJobs = false; }
+    }
+
+    function displayAuditResults(data) {
+      document.getElementById('audit-results-container').style.display = 'block';
+
+      document.getElementById('out-target-url').innerText = data.url;
+      document.getElementById('out-target-meta').innerText = `Profil: ${data.device.toUpperCase()} · Sačuvano merenje: ${data.capturedAt ? new Date(data.capturedAt).toLocaleString() : data.id}`;
+
+      const score = data.score;
+      const scoreEl = document.getElementById('out-perf-score');
+      scoreEl.innerText = score;
+
+      const scoreTag = document.getElementById('out-score-tag');
+      scoreTag.innerText = `Skor: ${score} / 100`;
+      scoreTag.className = 'tag ' + (score >= 90 ? 'tag-good' : score >= 50 ? 'tag-warning' : 'tag-danger');
+
+      const m = data.metrics;
+      document.getElementById('out-lcp').innerText = m.lcpMs ? (m.lcpMs / 1000).toFixed(1) + ' s' : '—';
+      document.getElementById('out-tbt').innerText = m.tbtMs ? (m.tbtMs / 1000).toFixed(1) + ' s' : '—';
+      document.getElementById('out-ttfb').innerText = m.ttfbMs ? Math.round(m.ttfbMs) + ' ms' : '—';
+      document.getElementById('out-images-size').innerText = m.imageBytes ? (m.imageBytes / 1024 / 1024).toFixed(2) + ' MB' : '—';
+
+      const images = data.resources?.images || [];
+      document.getElementById('out-images-count').innerText = `${images.length} preuzetih slika`;
+
+      // Status colors for KPI boxes
+      document.getElementById('kpi-lcp-box').className = 'kpi-box ' + (m.lcpMs != null && m.lcpMs <= 2500 ? 'good' : m.lcpMs != null && m.lcpMs <= 4000 ? 'warning' : 'danger');
+      document.getElementById('kpi-tbt-box').className = 'kpi-box ' + (m.tbtMs != null && m.tbtMs <= 300 ? 'good' : m.tbtMs != null && m.tbtMs <= 600 ? 'warning' : 'danger');
+
+      // Render Issues
+      const issuesContainer = document.getElementById('issues-list');
+      const issues = data.remediation?.issues || [];
+      if (!issues.length) {
+        issuesContainer.innerHTML = '<div style="grid-column:1/-1;color:var(--ms-text-muted);">Ova pravila nisu izdvojila kandidate za proveru. To nije potpuna potvrda performansi.</div>';
+      } else {
+        issuesContainer.innerHTML = issues.map((item, idx) => `
+          <div style="border:1px solid var(--ms-border-subtle);padding:1rem;border-radius:3px;background:#fafafa;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+              <strong style="font-size:0.9rem;">${idx + 1}. ${escapeHtml(item.title)}</strong>
+              <span class="tag ${item.impact === 'high' ? 'tag-danger' : 'tag-warning'}">${item.impact} prioritet</span>
+            </div>
+            <p style="font-size:0.85rem;color:var(--ms-text-secondary);margin-bottom:0.5rem;">${escapeHtml(item.description)}</p>
+            ${item.estimatedSavings ? `<div style="font-size:0.8rem;color:var(--ms-green);font-weight:600;margin-bottom:0.5rem;">Procenjena korist: ${item.estimatedSavings}</div>` : ''}
+            <div class="code-wrapper">
+              <pre><code>${escapeHtml(item.remediationSnippet)}</code></pre>
+              <button class="copy-button" onclick="copySnippet(this)">Kopiraj</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Render Images Table
+      const imagesTbody = document.getElementById('audit-images-tbody');
+      imagesTbody.innerHTML = images.map(img => `
+        <tr>
+          <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            <a href="${safeLink(img.url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(img.url)}</a>
+          </td>
+          <td><span class="tag tag-neutral">${escapeHtml(img.mimeType || 'nepoznato')}</span></td>
+          <td><strong>${img.transferSize ? (img.transferSize / 1024).toFixed(1) + ' kB' : '—'}</strong></td>
+          <td>${img.isLcpElement ? '<span class="tag tag-info">LCP Element</span>' : 'Standardno'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function apiFetch(url, options = {}) {
+      return fetch(url, { ...options, headers: { ...options.headers, 'X-MerchantPro-Request': '1' } });
+    }
+
+    function safeLink(value) {
+      try { const u = new URL(value); return ['http:', 'https:'].includes(u.protocol) ? escapeHtml(u.href) : '#'; }
+      catch { return '#'; }
+    }
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // 2. STORE BENCHMARKS
+    async function fetchStoredBenchmarks() {
+      const tbody = document.getElementById('benchmarks-tbody');
+      try {
+        const response = await apiFetch('/api/benchmarks');
+        const data = await response.json();
+        if (data.rows && data.rows.length > 0) {
+          tbody.innerHTML = data.rows.map(r => `
+            <tr>
+              <td><strong>${escapeHtml(r.name)}<br><small>${escapeHtml(r.pageType)} · ${escapeHtml(r.device)} · ${escapeHtml(r.runId)} · ${escapeHtml(r.updatedAt)} · ${escapeHtml(r.profileLabel)}</small></strong></td>
+              <td><span class="tag tag-neutral">${r.platform}</span></td>
+              <td>${r.role}</td>
+              <td><strong>${r.score ?? '—'} / 100</strong></td>
+              <td>${r.lcp}</td>
+              <td>${r.tbt}</td>
+              <td>${r.ttfb}</td>
+              <td>${r.images}</td>
+              <td>${r.total}</td>
+              <td style="color:var(--ms-text-muted);">${r.measurementsCount}</td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--ms-text-muted);">Nema sačuvanih rezultata na disku.</td></tr>';
+        }
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--ms-red);">Greška pri dohvatanju podataka.</td></tr>';
+      }
+    }
+
+    async function submitNewStore() {
+      const name = document.getElementById('new-store-name').value.trim();
+      const origin = document.getElementById('new-store-origin').value.trim();
+      const platform = document.getElementById('new-store-platform').value;
+      const role = document.getElementById('new-store-role').value;
+
+      if (!name || !origin) return alert('Unesite naziv i početni URL.');
+
+      try {
+        const response = await apiFetch('/api/manifest/store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, origin, platform, role })
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+        alert(`Prodavnica "${name}" je uspešno sačuvana u manifest.`);
+        document.getElementById('new-store-name').value = '';
+        document.getElementById('new-store-origin').value = '';
+      } catch (err) {
+        alert('Greška: ' + err.message);
+      }
+    }
+
+    // 3. IMAGE OPTIMIZER
+    const dropzoneEl = document.getElementById('file-dropzone');
+    dropzoneEl.addEventListener('dragover', (e) => { e.preventDefault(); dropzoneEl.style.borderColor = '#0067b8'; });
+    dropzoneEl.addEventListener('dragleave', () => { dropzoneEl.style.borderColor = '#9ca3af'; });
+    dropzoneEl.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzoneEl.style.borderColor = '#9ca3af';
+      if (e.dataTransfer.files.length) processSelectedFiles(e.dataTransfer.files);
+    });
+
+    async function processSelectedFiles(files) {
+      if (!files.length) return;
+      const profile = document.getElementById('select-profile').value;
+      const format = document.getElementById('select-format').value;
+
+      const panel = document.getElementById('optimizer-batch-panel');
+      const tbody = document.getElementById('optimizer-tbody');
+      panel.style.display = 'block';
+      tbody.innerHTML = '';
+
+      let totalBefore = 0;
+      let totalAfter = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('profile', profile);
+        formData.append('format', format);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${escapeHtml(file.name)}</td>
+          <td>U toku...</td>
+          <td>${(file.size / 1024).toFixed(1)} kB</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+        `;
+        tbody.appendChild(row);
+
+        try {
+          const res = await apiFetch('/api/optimize', { method: 'POST', body: formData });
+          const resData = await res.json();
+          if (!res.ok) throw new Error(resData.error || 'Obrada slike nije uspela.');
+
+          totalBefore += resData.originalBytes;
+          totalAfter += resData.optimizedBytes;
+
+          const downloadLink = `data:image/${resData.format};base64,${resData.base64}`;
+          row.innerHTML = `
+            <td><strong>${escapeHtml(resData.filename)}</strong></td>
+            <td>${resData.width} × ${resData.height} px</td>
+            <td>${(resData.originalBytes / 1024).toFixed(1)} kB</td>
+            <td style="color:var(--ms-green);font-weight:600;">${(resData.optimizedBytes / 1024).toFixed(1)} kB</td>
+            <td><span class="tag tag-good">-${resData.savedPercent.toFixed(1)}%</span></td>
+            <td><a href="${downloadLink}" download="${escapeHtml(resData.filename)}" class="btn btn-secondary" style="padding:0.25rem 0.6rem;font-size:0.75rem;">Preuzmi</a></td>
+          `;
+        } catch (e) {
+          row.innerHTML = `<td colspan="6" style="color:var(--ms-red);">Greška pri obradi: ${escapeHtml(e.message)}</td>`;
+        }
+      }
+
+      const diff = totalBefore - totalAfter;
+      const pct = totalBefore > 0 ? (diff / totalBefore * 100).toFixed(1) : 0;
+      document.getElementById('batch-summary-text').innerText = `Ukupan prenos smanjen za ${(diff / 1024).toFixed(1)} kB (${pct}% uštede).`;
+    }
+
+    // 4. MERCHANTPRO API
+    async function readCatalogViaApi() {
+      const origin = document.getElementById('api-origin').value.trim();
+      const username = document.getElementById('api-username').value.trim();
+      const secret = document.getElementById('api-secret').value.trim();
+      const maxProducts = document.getElementById('api-limit').value.trim();
+
+      if (!origin || !username || !secret) return alert('Molimo unesite Origin, Username i Secret.');
+
+      const tbody = document.getElementById('api-catalog-tbody');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Slanje zahteva ka MerchantPro REST API-ju...</td></tr>';
+      document.getElementById('api-catalog-panel').style.display = 'block';
+
+      try {
+        const response = await apiFetch('/api/inventory/fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ origin, username, secret, maxProducts })
+        });
+        const result = await response.json();
+        if (result.error) throw new Error(result.error);
+
+        if (result.products && result.products.length > 0) {
+          tbody.innerHTML = result.products.map(p => `
+            <tr>
+              <td><code>${escapeHtml(p.id)}</code></td>
+              <td><strong>${escapeHtml(p.title || p.name || 'Artikal')}</strong></td>
+              <td>${p.images ? p.images.length : 0}</td>
+              <td style="max-width:350px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${p.images && p.images[0] ? `<a href="${safeLink(p.images[0].url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(p.images[0].url)}</a>` : 'Nema'}
+              </td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--ms-text-muted);">Nisu pronađeni artikli.</td></tr>';
+        }
+    // 5. RESPONSIVE & SCRIPTS DELIVERY AUDIT
+    async function fetchDeliveryAudits() {
+      const respTbody = document.getElementById('resp-issues-tbody');
+      const scriptTbody = document.getElementById('script-issues-tbody');
+      respTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">Učitavanje responsive analize...</td></tr>';
+      scriptTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">Učitavanje analize skripti...</td></tr>';
+
+      try {
+        const resp = await apiFetch('/api/audit/responsive');
+        const data = await resp.json();
+        if (resp.ok && data) {
+          document.getElementById('resp-total-images').innerText = data.totalImages ?? '--';
+          document.getElementById('resp-mp-images').innerText = `${data.merchantProImages ?? 0} MerchantPro CDN`;
+          document.getElementById('resp-issues-count').innerText = data.issues?.length ?? 0;
+          document.getElementById('resp-savings-kb').innerText = data.totalEstimatedSavingsBytes ? (data.totalEstimatedSavingsBytes / 1024).toFixed(1) + ' kB' : '0 kB';
+
+          if (data.issues && data.issues.length > 0) {
+            respTbody.innerHTML = data.issues.map(iss => `
+              <tr>
+                <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <a href="${safeLink(iss.url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(iss.url)}</a>
+                </td>
+                <td><span class="tag tag-neutral">${escapeHtml(iss.type)}</span></td>
+                <td><span class="tag ${iss.severity === 'critical' ? 'tag-danger' : 'tag-warning'}">${iss.severity}</span></td>
+                <td>${escapeHtml(iss.details)}</td>
+                <td><strong style="color:var(--ms-blue);">${escapeHtml(iss.suggestion)}</strong></td>
+              </tr>
+            `).join('');
+          } else {
+            respTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ms-green);">Nisu uočeni očigledni responsive delivery problemi.</td></tr>';
+          }
+        } else {
+          respTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ms-text-muted);">${escapeHtml(data.error || 'Nema sačuvanih podataka.')}</td></tr>`;
+        }
+      } catch (e) {
+        respTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--ms-red);">Greška: ${escapeHtml(e.message)}</td></tr>`;
+      }
+
+      try {
+        const resp = await apiFetch('/api/audit/scripts');
+        const data = await resp.json();
+        if (resp.ok && data) {
+          document.getElementById('script-total-count').innerText = data.totalScripts ?? '--';
+          document.getElementById('script-3rd-count').innerText = `${data.thirdPartyScripts ?? 0} eksternih`;
+          document.getElementById('script-3rd-bytes').innerText = data.totalThirdPartyBytes ? (data.totalThirdPartyBytes / 1024).toFixed(1) + ' kB' : '0 kB';
+          document.getElementById('script-cpu-ms').innerText = data.totalMainThreadMs ? Math.round(data.totalMainThreadMs) + ' ms' : '0 ms';
+
+          if (data.issues && data.issues.length > 0) {
+            scriptTbody.innerHTML = data.issues.map(iss => `
+              <tr>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                  <a href="${safeLink(iss.url)}" target="_blank" style="color:var(--ms-blue);text-decoration:none;">${escapeHtml(iss.domain || iss.url)}</a>
+                </td>
+                <td><span class="tag tag-neutral">${escapeHtml(iss.type)}</span></td>
+                <td><span class="tag ${iss.severity === 'critical' ? 'tag-danger' : 'tag-warning'}">${iss.severity}</span></td>
+                <td>${iss.transferBytes ? (iss.transferBytes / 1024).toFixed(1) + ' kB' : '—'}</td>
+                <td>${iss.mainThreadMs ? Math.round(iss.mainThreadMs) + ' ms' : '—'}</td>
+                <td><strong style="color:var(--ms-blue);">${escapeHtml(iss.suggestion)}</strong></td>
+              </tr>
+            `).join('');
+          } else {
+            scriptTbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ms-green);">Nisu uočene teške blokirajuće skripte.</td></tr>';
+          }
+        } else {
+          scriptTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ms-text-muted);">${escapeHtml(data.error || 'Nema sačuvanih podataka.')}</td></tr>`;
+        }
+      } catch (e) {
+        scriptTbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--ms-red);">Greška: ${escapeHtml(e.message)}</td></tr>`;
+      }
+    }
+
+
+    const historyPanel = document.createElement('section');
+    historyPanel.style.cssText = 'padding:20px;margin:16px 0;border:1px solid #ddd';
+    const historyTitle = document.createElement('h3'); historyTitle.textContent = 'Red i istorija analiza';
+    const historyNote = document.createElement('p'); historyNote.textContent = 'Analize rade redom i ostaju sačuvane kada zatvorite panel. Otkazivanje je dostupno dok posao čeka. Prikazano je poslednjih 200 poslova.';
+    const historyList = document.createElement('div'); historyList.id = 'job-history';
+    historyPanel.append(historyTitle,historyNote,historyList);
+    document.getElementById('audit-results-container').before(historyPanel);
+    refreshJobs(); setInterval(refreshJobs,3000);
+
+    // Initialize stored benchmarks on load
+    fetchStoredBenchmarks();
+  </script>
+</body>
+</html>

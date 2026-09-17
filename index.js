@@ -1,13 +1,206 @@
-// Smart Deferral Vercel Node.js Serverless & Edge Handler
-// Self-contained, zero-dependency, works natively with Vercel Node.js
+// Smart Deferral Vercel Node.js Serverless & Edge Handler v0.3.0
+// Multi-tenant Commercial Architecture: Client Dashboard, Admin Panel, Remote Controls, & Persistent Telemetry
+import http from 'node:http';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-function resolveCohort(ctx) {
-  var query = ctx.query || {};
-  var rawCountry = (query.force_country || ctx.country || 'unknown').toUpperCase();
-  var ua = ctx.userAgent || '';
-  var isSearchEngine = /Googlebot|bingbot|yandex|duckduckbot|baiduspider/i.test(ua);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-  if (query.no_defer === '1') {
+// --- CONFIG & SECRETS ---
+const SESSION_SECRET = process.env.SESSION_SECRET || 'merchantpro-lab-auth-secret-key-v1-dev';
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// --- AUTH UTILS ---
+function hashPassword(password, salt) {
+  const actualSalt = salt || randomBytes(16).toString('hex');
+  const hmac = createHmac('sha256', actualSalt);
+  hmac.update(password);
+  const hash = hmac.digest('hex');
+  return { hash: hash, salt: actualSalt };
+}
+
+function verifyPassword(password, expectedHash, salt) {
+  const res = hashPassword(password, salt);
+  const hashBuf = Buffer.from(res.hash, 'hex');
+  const expBuf = Buffer.from(expectedHash, 'hex');
+  if (hashBuf.length !== expBuf.length) return false;
+  return timingSafeEqual(hashBuf, expBuf);
+}
+
+function createSessionToken(user) {
+  const session = {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    storeId: user.storeId,
+    expiresAt: Date.now() + TOKEN_TTL_MS,
+  };
+  const payloadStr = Buffer.from(JSON.stringify(session)).toString('base64url');
+  const signature = createHmac('sha256', SESSION_SECRET).update(payloadStr).digest('base64url');
+  return payloadStr + '.' + signature;
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  const payloadStr = parts[0];
+  const signature = parts[1];
+  if (!payloadStr || !signature) return null;
+
+  const expectedSig = createHmac('sha256', SESSION_SECRET).update(payloadStr).digest('base64url');
+  const sigBuf = Buffer.from(signature);
+  const expBuf = Buffer.from(expectedSig);
+  if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) return null;
+
+  try {
+    const jsonStr = Buffer.from(payloadStr, 'base64url').toString('utf8');
+    const session = JSON.parse(jsonStr);
+    if (session.expiresAt < Date.now()) return null;
+    return session;
+  } catch (_) {
+    return null;
+  }
+}
+
+function parseCookies(req) {
+  const list = {};
+  const rc = req.headers.cookie;
+  if (rc) {
+    rc.split(';').forEach(function(cookie) {
+      const parts = cookie.split('=');
+      list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+  }
+  return list;
+}
+
+function getSessionFromReq(req) {
+  const authHeader = req.headers.authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7).trim();
+    const s = verifySessionToken(token);
+    if (s) return s;
+  }
+  const cookies = parseCookies(req);
+  if (cookies.sd_session) {
+    return verifySessionToken(cookies.sd_session);
+  }
+  return null;
+}
+
+// --- DATABASE & MULTI-TENANT STATE ---
+const adminAuth = hashPassword('admin123', 'admin_salt_fixed');
+const clientAuth = hashPassword('client123', 'client_salt_fixed');
+
+const db = {
+  stores: {
+    volimsvojdom: {
+      id: 'volimsvojdom',
+      name: 'VolimSvojDom.rs',
+      domain: 'www.volimsvojdom.rs',
+      platform: 'merchantpro',
+      status: 'live',
+      canaryPercent: 1, // 1% Domestic Canary
+      killSwitch: false,
+      vendors: { meta: true, gtm: true, tiktok: true },
+      baselineBlockingMs: 11300,
+      optimizedBlockingMs: 6900,
+      createdAt: '2026-09-08T00:00:00.000Z',
+      updatedAt: new Date().toISOString()
+    },
+    baldino: {
+      id: 'baldino',
+      name: 'Baldino.rs',
+      domain: 'baldino.rs',
+      platform: 'shopify',
+      status: 'pilot',
+      canaryPercent: 0,
+      killSwitch: false,
+      vendors: { meta: true, gtm: true, tiktok: false },
+      baselineBlockingMs: 8400,
+      optimizedBlockingMs: 4850,
+      createdAt: '2026-09-10T00:00:00.000Z',
+      updatedAt: new Date().toISOString()
+    }
+  },
+  users: {
+    'admin@merchantpro.lab': {
+      id: 'usr_admin',
+      email: 'admin@merchantpro.lab',
+      passwordHash: adminAuth.hash,
+      salt: adminAuth.salt,
+      name: 'Ivan (Administrator)',
+      role: 'ADMIN',
+      storeId: null
+    },
+    'client@volimsvojdom.rs': {
+      id: 'usr_client',
+      email: 'client@volimsvojdom.rs',
+      passwordHash: clientAuth.hash,
+      salt: clientAuth.salt,
+      name: 'VolimSvojDom Tim',
+      role: 'CLIENT',
+      storeId: 'volimsvojdom'
+    }
+  },
+  telemetry: []
+};
+
+function getStoreMetrics(storeId, windowHours = 24) {
+  const store = db.stores[storeId];
+  if (!store) return null;
+  const cutoff = Date.now() - windowHours * 3600 * 1000;
+  const sessions = db.telemetry.filter(t => t.storeId === storeId && t.timestamp >= cutoff);
+
+  let totalSessions = sessions.length;
+  let optimizedSessions = 0;
+  let baselineSessions = 0;
+  let crawlerSessions = 0;
+  let totalErrors = 0;
+  const countryBreakdown = {};
+
+  for (const s of sessions) {
+    if (s.cohort && s.cohort.includes('canary')) optimizedSessions++;
+    else if (s.cohort === 'search_engine_baseline') crawlerSessions++;
+    else baselineSessions++;
+
+    totalErrors += (s.errorsCount || 0);
+    const c = s.country || 'unknown';
+    countryBreakdown[c] = (countryBreakdown[c] || 0) + 1;
+  }
+
+  const reductionPercent = store.baselineBlockingMs > 0
+    ? Math.round(((store.optimizedBlockingMs - store.baselineBlockingMs) / store.baselineBlockingMs) * 1000) / 10
+    : 0;
+
+  return {
+    storeId: storeId,
+    totalSessions: totalSessions,
+    optimizedSessions: optimizedSessions,
+    baselineSessions: baselineSessions,
+    crawlerSessions: crawlerSessions,
+    totalErrors: totalErrors,
+    baselineBlockingMs: store.baselineBlockingMs,
+    optimizedBlockingMs: store.optimizedBlockingMs,
+    reductionPercent: reductionPercent,
+    recentSessions: sessions.slice(-50).sort((a, b) => b.timestamp - a.timestamp),
+    countryBreakdown: countryBreakdown
+  };
+}
+
+// --- DYNAMIC SCRIPT GENERATOR ---
+function resolveCohort(ctx, store) {
+  const query = ctx.query || {};
+  const rawCountry = (query.force_country || ctx.country || 'unknown').toUpperCase();
+  const ua = ctx.userAgent || '';
+  const isSearchEngine = /Googlebot|bingbot|yandex|duckduckbot|baiduspider/i.test(ua);
+
+  if (query.no_defer === '1' || (store && store.killSwitch)) {
     return { cohort: 'kill_switched', shouldDefer: false, country: rawCountry };
   }
   if (isSearchEngine) {
@@ -26,17 +219,22 @@ function resolveCohort(ctx) {
   }
 }
 
-function generateScript(ctx) {
-  var resolution = resolveCohort(ctx);
-  var cohort = resolution.cohort;
-  var shouldDefer = resolution.shouldDefer;
-  var country = resolution.country;
-  var host = ctx.host || 'merchantpro-lab.vercel.app';
-  var beaconUrl = 'https://' + host + '/api/telemetry';
+function generateScript(ctx, store) {
+  const storeConfig = store || db.stores.volimsvojdom;
+  const resolution = resolveCohort(ctx, storeConfig);
+  const cohort = resolution.cohort;
+  const shouldDefer = resolution.shouldDefer;
+  const country = resolution.country;
+  const host = ctx.host || 'merchantpro-lab.vercel.app';
+  const beaconUrl = 'https://' + host + '/api/telemetry';
+
+  const rsCanaryPercent = (typeof storeConfig.canaryPercent === 'number') ? storeConfig.canaryPercent : 1;
+  const isKillSwitchedByStore = Boolean(storeConfig.killSwitch);
+  const vendors = storeConfig.vendors || { meta: true, gtm: true, tiktok: true };
 
   return '/**\n' +
-    ' * Smart Deferral Edge Runtime v0.2.2\n' +
-    ' * Country: ' + country + ' | Cohort: ' + cohort + ' | Defer: ' + shouldDefer + '\n' +
+    ' * Smart Deferral Edge Runtime v0.3.0\n' +
+    ' * Store: ' + storeConfig.id + ' | Country: ' + country + ' | Cohort: ' + cohort + ' | CanaryRate: ' + rsCanaryPercent + '%\n' +
     ' */\n' +
     '(function(window, document) {\n' +
     '  "use strict";\n' +
@@ -59,7 +257,7 @@ function generateScript(ctx) {
     '  if (urlParams.indexOf("no_defer=0") !== -1) safeRemoveSession("__sdKillSwitch");\n' +
     '  if (urlParams.indexOf("domestic=1") !== -1) safeSetSession("__sdDomesticCohort", "domestic_canary");\n' +
     '  if (urlParams.indexOf("domestic=0") !== -1) safeRemoveSession("__sdDomesticCohort");\n' +
-    '  var isKillSwitched = window.SMART_DEFERRAL_ENABLED === false || urlParams.indexOf("no_defer=1") !== -1 || safeGetSession("__sdKillSwitch") === "1";\n' +
+    '  var isKillSwitched = window.SMART_DEFERRAL_ENABLED === false || ' + isKillSwitchedByStore + ' || urlParams.indexOf("no_defer=1") !== -1 || safeGetSession("__sdKillSwitch") === "1";\n' +
     '  var isCanaryForced = urlParams.indexOf("canary=1") !== -1 || safeGetSession("__sdForced") === "1";\n' +
     '  var isCanaryDisabled = urlParams.indexOf("canary=0") !== -1;\n' +
     '  var activeCohort = isKillSwitched ? "kill_switched" : (isCanaryForced ? "forced_canary" : "' + cohort + '");\n' +
@@ -69,7 +267,7 @@ function generateScript(ctx) {
     '      activeCohort = storedCohort;\n' +
     '    } else {\n' +
     '      var roll = Math.random() * 100;\n' +
-    '      activeCohort = (roll < 1.0) ? "domestic_canary" : "baseline";\n' +
+    '      activeCohort = (roll < ' + rsCanaryPercent + ') ? "domestic_canary" : "baseline";\n' +
     '      safeSetSession("__sdDomesticCohort", activeCohort);\n' +
     '    }\n' +
     '  }\n' +
@@ -77,6 +275,7 @@ function generateScript(ctx) {
     '  var beaconUrl = "' + beaconUrl + '";\n' +
     '  window.__sdTelemetry = {\n' +
     '    version: "0.3.0-edge",\n' +
+    '    storeId: "' + storeConfig.id + '",\n' +
     '    cohort: activeCohort,\n' +
     '    country: "' + country + '",\n' +
     '    mode: shouldDefer ? "smart_deferral_canary" : "immediate_fallback",\n' +
@@ -93,6 +292,7 @@ function generateScript(ctx) {
     '      try {\n' +
     '        var body = JSON.stringify(Object.assign({\n' +
     '          type: type,\n' +
+    '          storeId: "' + storeConfig.id + '",\n' +
     '          cohort: activeCohort,\n' +
     '          country: "' + country + '",\n' +
     '          url: window.location.href,\n' +
@@ -130,6 +330,7 @@ function generateScript(ctx) {
     '      window.dataLayer = window.dataLayer || [];\n' +
     '      window.dataLayer.push({\n' +
     '        event: "smart_deferral_telemetry",\n' +
+    '        sd_store: "' + storeConfig.id + '",\n' +
     '        sd_cohort: window.__sdTelemetry.cohort,\n' +
     '        sd_country: window.__sdTelemetry.country,\n' +
     '        sd_mode: window.__sdTelemetry.mode,\n' +
@@ -192,9 +393,10 @@ function generateScript(ctx) {
     '  var isFlushed = false;\n' +
     '  function isDeferredScript(src) {\n' +
     '    if (!src || typeof src !== "string") return false;\n' +
-    '    return src.indexOf("fbevents.js") !== -1 ||\n' +
-    '           src.indexOf("googletagmanager.com/gtm.js") !== -1 ||\n' +
-    '           src.indexOf("analytics.tiktok.com") !== -1;\n' +
+    '    var isMeta = ' + vendors.meta + ' && src.indexOf("fbevents.js") !== -1;\n' +
+    '    var isGtm = ' + vendors.gtm + ' && src.indexOf("googletagmanager.com/gtm.js") !== -1;\n' +
+    '    var isTiktok = ' + vendors.tiktok + ' && src.indexOf("analytics.tiktok.com") !== -1;\n' +
+    '    return isMeta || isGtm || isTiktok;\n' +
     '  }\n' +
     '  function getVendor(src) {\n' +
     '    if (src.indexOf("fbevents.js") !== -1) return "meta";\n' +
@@ -252,15 +454,24 @@ function generateScript(ctx) {
     '})(window, document);\n';
 }
 
+function loadHtmlFile(filename) {
+  const p1 = join(__dirname, 'ui', filename);
+  if (existsSync(p1)) return readFileSync(p1, 'utf8');
+  const p2 = join(__dirname, 'src/ui', filename);
+  if (existsSync(p2)) return readFileSync(p2, 'utf8');
+  return null;
+}
+
+// --- MAIN HANDLER ---
 export default function handler(req, res) {
-  var host = req.headers.host || 'merchantpro-lab.vercel.app';
-  var url = new URL(req.url, 'https://' + host);
-  var pathname = url.pathname;
+  const host = req.headers.host || 'merchantpro-lab.vercel.app';
+  const url = new URL(req.url, 'https://' + host);
+  const pathname = url.pathname;
 
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -268,12 +479,59 @@ export default function handler(req, res) {
     return;
   }
 
-  // 1. Script delivery: /sd.js
+  // Helper: Read JSON Body
+  function readJsonBody(callback) {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const json = body ? JSON.parse(body) : {};
+        callback(null, json);
+      } catch (err) {
+        callback(err, null);
+      }
+    });
+  }
+
+  // Helper: JSON Response
+  function sendJson(statusCode, data) {
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(data));
+  }
+
+  // Helper: HTML Response
+  function sendHtml(html) {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(html);
+  }
+
+  // --- UI ROUTES ---
+  if (pathname === '/login') {
+    const html = loadHtmlFile('login.html');
+    if (html) return sendHtml(html);
+  }
+
+  if (pathname === '/dashboard') {
+    const html = loadHtmlFile('dashboard.html');
+    if (html) return sendHtml(html);
+  }
+
+  if (pathname === '/admin') {
+    const html = loadHtmlFile('admin.html');
+    if (html) return sendHtml(html);
+  }
+
+  // --- 1. SCRIPT DELIVERY: /sd.js ---
   if (pathname === '/sd.js' || pathname === '/api/sd') {
-    var query = {};
-    url.searchParams.forEach(function(val, key) { query[key] = val; });
-    var country = (query.force_country || req.headers['x-vercel-ip-country'] || 'unknown').toUpperCase();
-    var ctx = {
+    const query = {};
+    url.searchParams.forEach((val, key) => { query[key] = val; });
+    const storeId = query.store || 'volimsvojdom';
+    const store = db.stores[storeId] || db.stores.volimsvojdom;
+
+    const country = (query.force_country || req.headers['x-vercel-ip-country'] || 'unknown').toUpperCase();
+    const ctx = {
       country: country,
       host: host,
       url: url.href,
@@ -281,7 +539,7 @@ export default function handler(req, res) {
       query: query
     };
 
-    var script = generateScript(ctx);
+    const script = generateScript(ctx, store);
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
     res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
@@ -290,28 +548,163 @@ export default function handler(req, res) {
     return;
   }
 
-  // 2. Telemetry beacon: /api/telemetry
+  // --- 2. TELEMETRY BEACON: /api/telemetry ---
   if (pathname === '/api/telemetry') {
-    var body = '';
-    req.on('data', function(chunk) { body += chunk; });
-    req.on('end', function() {
-      try {
-        var data = body ? JSON.parse(body) : {};
-        console.log('[SD_TELEMETRY]', JSON.stringify(Object.assign({
-          loggedAt: new Date().toISOString(),
-          country: req.headers['x-vercel-ip-country'] || 'unknown',
-          clientIp: req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown'
-        }, data)));
-      } catch (_) {}
-      res.statusCode = 200;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ ok: true }));
+    readJsonBody((_, data) => {
+      const payload = data || {};
+      const storeId = payload.storeId || 'volimsvojdom';
+      const country = req.headers['x-vercel-ip-country'] || payload.country || 'unknown';
+      const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+
+      // Persist into memory store
+      const sessionEntry = {
+        id: 'tel_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        storeId: storeId,
+        timestamp: payload.timestamp || Date.now(),
+        cohort: payload.cohort || 'unknown',
+        country: country,
+        clientIp: clientIp,
+        url: payload.url || 'unknown',
+        longTaskBlockingMs: payload.longTaskBlockingMs || 0,
+        errorsCount: payload.errorsCount || 0,
+        eventsBuffered: payload.eventsBuffered || 0,
+        meta: payload.meta || 'idle',
+        gtm: payload.gtm || 'idle',
+        tiktok: payload.tiktok || 'idle'
+      };
+
+      db.telemetry.push(sessionEntry);
+      if (db.telemetry.length > 5000) db.telemetry.shift();
+
+      // Log for Vercel console log stream
+      console.log('[SD_TELEMETRY]', JSON.stringify(Object.assign({
+        loggedAt: new Date().toISOString(),
+        country: country,
+        clientIp: clientIp
+      }, payload)));
+
+      sendJson(200, { ok: true, id: sessionEntry.id });
     });
     return;
   }
 
-  // 3. Status page for root /
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
-  res.end('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Smart Deferral Edge Engine</title><style>body{font-family:sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}.card{background:#1e293b;padding:2.5rem;border-radius:12px;border:1px solid #334155;max-width:500px}h1{color:#38bdf8;font-size:1.5rem}.badge{background:#065f46;color:#34d399;padding:3px 8px;border-radius:9999px;font-size:.8rem;font-weight:600}p{color:#94a3b8}code{background:#0f172a;padding:3px 6px;border-radius:4px;color:#f43f5e}a{color:#38bdf8}</style></head><body><div class="card"><div class="badge">&#9679; OPERATIONAL</div><h1>Smart Deferral Edge Engine</h1><p>Automated IP Geo-Targeted Script Delivery &amp; RUM Telemetry Beacon.</p><ul><li><strong>Script:</strong> <a href="/sd.js"><code>/sd.js</code></a></li><li><strong>Telemetry:</strong> <code>/api/telemetry</code></li></ul></div></body></html>');
+  // --- 3. AUTH API ---
+  if (pathname === '/api/auth/login' && req.method === 'POST') {
+    readJsonBody((_, body) => {
+      const email = (body.email || '').toLowerCase().trim();
+      const password = body.password || '';
+      const user = db.users[email];
+      if (!user || !verifyPassword(password, user.passwordHash, user.salt)) {
+        return sendJson(401, { error: 'Pogrešna e-mail adresa ili lozinka.' });
+      }
+
+      const token = createSessionToken(user);
+      res.setHeader('Set-Cookie', `sd_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${7 * 86400}`);
+      sendJson(200, {
+        ok: true,
+        token: token,
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, storeId: user.storeId }
+      });
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/me') {
+    const session = getSessionFromReq(req);
+    if (!session) return sendJson(401, { error: 'Niste prijavljeni.' });
+    return sendJson(200, { user: session });
+  }
+
+  if (pathname === '/api/auth/logout' && req.method === 'POST') {
+    res.setHeader('Set-Cookie', 'sd_session=; Path=/; HttpOnly; Max-Age=0');
+    return sendJson(200, { ok: true });
+  }
+
+  // --- 4. CLIENT API (TENANT ISOLATED) ---
+  if (pathname === '/api/client/overview') {
+    const session = getSessionFromReq(req);
+    if (!session) return sendJson(401, { error: 'Neautorizovan pristup.' });
+
+    const storeId = session.role === 'ADMIN' ? (url.searchParams.get('store') || 'volimsvojdom') : session.storeId;
+    if (!storeId) return sendJson(400, { error: 'Nedostaje store identifikator.' });
+
+    // Enforce tenant isolation
+    if (session.role === 'CLIENT' && session.storeId !== storeId) {
+      return sendJson(403, { error: 'Zabranjen pristup tuđoj prodavnici (Tenant Isolation).' });
+    }
+
+    const store = db.stores[storeId];
+    if (!store) return sendJson(404, { error: 'Prodavnica nije pronađena.' });
+    const metrics = getStoreMetrics(storeId, 24);
+
+    return sendJson(200, { store: store, metrics: metrics });
+  }
+
+  // --- 5. ADMIN API (ADMIN ROLE ONLY) ---
+  if (pathname.startsWith('/api/admin/')) {
+    const session = getSessionFromReq(req);
+    if (!session) return sendJson(401, { error: 'Prijavite se kao administrator.' });
+    if (session.role !== 'ADMIN') return sendJson(403, { error: 'Samo administrator ima pristup ovom resursu.' });
+
+    // GET /api/admin/stores
+    if (pathname === '/api/admin/stores' && req.method === 'GET') {
+      const storesList = Object.values(db.stores).map(s => {
+        const m = getStoreMetrics(s.id, 24);
+        return Object.assign({}, s, {
+          totalSessions: m.totalSessions,
+          totalErrors: m.totalErrors
+        });
+      });
+      return sendJson(200, { stores: storesList });
+    }
+
+    // GET /api/admin/stores/:id
+    const storeDetailMatch = pathname.match(/^\/api\/admin\/stores\/([a-zA-Z0-9_-]+)$/);
+    if (storeDetailMatch && req.method === 'GET') {
+      const storeId = storeDetailMatch[1];
+      const store = db.stores[storeId];
+      if (!store) return sendJson(404, { error: 'Prodavnica ne postoji.' });
+      const metrics = getStoreMetrics(storeId, 24);
+      return sendJson(200, { store: store, metrics: metrics });
+    }
+
+    // POST /api/admin/stores/:id/config
+    const storeConfigMatch = pathname.match(/^\/api\/admin\/stores\/([a-zA-Z0-9_-]+)\/config$/);
+    if (storeConfigMatch && req.method === 'POST') {
+      const storeId = storeConfigMatch[1];
+      const store = db.stores[storeId];
+      if (!store) return sendJson(404, { error: 'Prodavnica ne postoji.' });
+
+      readJsonBody((_, body) => {
+        if (typeof body.canaryPercent === 'number') store.canaryPercent = body.canaryPercent;
+        if (typeof body.killSwitch === 'boolean') store.killSwitch = body.killSwitch;
+        if (body.status) store.status = body.status;
+        if (body.vendors) {
+          store.vendors = Object.assign({}, store.vendors, body.vendors);
+        }
+        store.updatedAt = new Date().toISOString();
+        return sendJson(200, { ok: true, store: store });
+      });
+      return;
+    }
+  }
+
+  // --- ROOT / FALLBACK STATUS PAGE ---
+  if (pathname === '/') {
+    // If logged in, redirect to appropriate view
+    const session = getSessionFromReq(req);
+    if (session) {
+      res.statusCode = 302;
+      res.setHeader('Location', session.role === 'ADMIN' ? '/admin' : '/dashboard');
+      res.end();
+      return;
+    }
+    // Otherwise redirect to login
+    res.statusCode = 302;
+    res.setHeader('Location', '/login');
+    res.end();
+    return;
+  }
+
+  sendJson(404, { error: 'Not Found' });
 }
