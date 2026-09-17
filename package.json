@@ -9,9 +9,10 @@
   },
   "scripts": {
     "dev": "tsx src/cli.ts",
-    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/ui',{recursive:true});fs.copyFileSync('src/ui/index.html','dist/ui/index.html');\"",
+    "build:ui": "node scripts/build-ui.mjs",
+    "build": "npm run build:ui && tsc -p tsconfig.json && node -e \"const fs=require('fs');fs.mkdirSync('dist/ui',{recursive:true});fs.copyFileSync('src/ui/index.html','dist/ui/index.html');\"",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "npm run build:ui && tsx --test tests/*.test.ts",
     "check": "npm run typecheck && npm test && npm run build",
     "ui": "tsx src/cli.ts ui"
   },

@@ -1,508 +1,248 @@
-<!DOCTYPE html>
-<html lang="sr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Operacije | MerchantPro Lab</title>
-  <style>
-    :root {
-      --bg: #f8fafc;
-      --surface: #ffffff;
-      --border: #e2e8f0;
-      --border-subtle: #edf2f7;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --primary: #0f172a;
-      --primary-hover: #1e293b;
-      --success: #15803d;
-      --success-bg: #f0fdf4;
-      --success-border: #bbf7d0;
-      --danger: #dc2626;
-      --danger-bg: #fef2f2;
-      --danger-border: #fecaca;
-      --accent: #2563eb;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-    }
-    header {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-    }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .badge-admin {
-      background: #0f172a;
-      color: #ffffff;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.03em;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 13px;
-    }
-    .btn-secondary {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .btn-secondary:hover { background: #f1f5f9; }
-    main {
-      max-width: 1200px;
-      margin: 32px auto;
-      padding: 0 24px;
-    }
-    .section-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .section-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #ffffff;
-    }
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .table-container {
-      overflow-x: auto;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-      text-align: left;
-    }
-    th {
-      background: #f8fafc;
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-subtle);
-      color: var(--text);
-    }
-    tr:last-child td { border-bottom: none; }
-    tr.selected td { background: #f8fafc; }
-    .tag {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .tag-live { background: var(--success-bg); color: var(--success); border: 1px solid var(--success-border); }
-    .tag-pilot { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .tag-issue { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
-    .btn-sm {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .btn-sm:hover { background: #f1f5f9; }
-    .control-layout {
-      padding: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-    @media (max-width: 800px) {
-      .control-layout { grid-template-columns: 1fr; }
-    }
-    .control-group {
-      margin-bottom: 20px;
-    }
-    .control-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 8px;
-      display: block;
-    }
-    .button-group {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .btn-choice {
-      padding: 7px 12px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text);
-      cursor: pointer;
-    }
-    .btn-choice.active {
-      background: #0f172a;
-      color: #ffffff;
-      border-color: #0f172a;
-    }
-    .toggle-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-      padding: 9px 16px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-    }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .alert-saved {
-      margin: 16px 20px 0;
-      padding: 10px 14px;
-      background: var(--success-bg);
-      border: 1px solid var(--success-border);
-      color: var(--success);
-      font-size: 13px;
-      border-radius: 6px;
-      display: none;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <div class="header-left">
-      <span class="brand-title">MerchantPro Lab</span>
-      <span class="badge-admin">ADMIN</span>
-    </div>
-    <div class="header-right">
-      <span id="userGreeting" style="color:var(--text-muted);">Admin</span>
-      <button class="btn-secondary" id="logoutBtn">Odjava</button>
-    </div>
-  </header>
-
-  <main>
-    <!-- 1. STORES LIST -->
-    <div class="section-box">
-      <div class="section-header">
-        <div class="section-title">Aktivne klijentske prodavnice</div>
-        <span style="font-size: 12px; color: var(--text-muted);">Runtime v0.3.0</span>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Prodavnica</th>
-              <th>Platforma</th>
-              <th>Status</th>
-              <th>Rollout (Domaći %)</th>
-              <th>Greške (24h)</th>
-              <th>Tracking</th>
-              <th>Akcija</th>
-            </tr>
-          </thead>
-          <tbody id="storesTableBody">
-            <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                Učitavanje prodavnica...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 2. CONTROL ROOM -->
-    <div class="section-box">
-      <div class="section-header">
-        <div class="section-title">
-          Kontrole za prodavnicu: <span id="activeStoreHeading" style="font-weight:700;">VolimSvojDom.rs</span>
-        </div>
-      </div>
-
-      <div id="saveToast" class="alert-saved">Izmene su sačuvane i primenjene na Vercel Edge čvorovima.</div>
-
-      <div class="control-layout">
-        <div>
-          <div class="control-group">
-            <label class="control-label">Domaći (RS) Rollout procenat:</label>
-            <div class="button-group" id="canaryGroup">
-              <button type="button" class="btn-choice" data-percent="0">0% (Svi na standardno)</button>
-              <button type="button" class="btn-choice" data-percent="1">1% (Siguran test)</button>
-              <button type="button" class="btn-choice" data-percent="5">5% (Brži rollout)</button>
-              <button type="button" class="btn-choice" data-percent="10">10%</button>
-              <button type="button" class="btn-choice" data-percent="100">100% (Svi kupci)</button>
-            </div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
-              Kupci iz Srbije se automatski raspodeljuju prema ovom procentu. Izbor se čuva u sesiji kupca.
-            </p>
-          </div>
-
-          <div class="control-group">
-            <label class="control-label">Glavni prekidač sistema (Kill-Switch):</label>
-            <div class="toggle-item">
-              <div>
-                <strong>Optimizacija aktivna</strong>
-                <div style="font-size: 12px; color: var(--text-muted);">Isključuje sva odlaganja i vraća originalno učitavanje bez diranja admin koda.</div>
-              </div>
-              <input type="checkbox" id="killSwitchCheckbox" style="transform: scale(1.2); cursor: pointer;">
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="control-group">
-            <label class="control-label">Uključeni marketinški trackeri za odlaganje:</label>
-            <div class="toggle-item">
-              <span>Meta Pixel (Facebook & Instagram)</span>
-              <input type="checkbox" id="vendorMeta" checked style="transform: scale(1.2); cursor: pointer;">
-            </div>
-            <div class="toggle-item">
-              <span>Google Tag Manager / GA4</span>
-              <input type="checkbox" id="vendorGtm" checked style="transform: scale(1.2); cursor: pointer;">
-            </div>
-            <div class="toggle-item">
-              <span>TikTok Pixel</span>
-              <input type="checkbox" id="vendorTiktok" checked style="transform: scale(1.2); cursor: pointer;">
-            </div>
-          </div>
-
-          <button type="button" class="btn-primary" id="saveBtn">Sačuvaj konfiguraciju</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3. TELEMETRY LOG -->
-    <div class="section-box">
-      <div class="section-header">
-        <div class="section-title">Nadzor dolaznih sesija i grešaka u realnom vremenu</div>
-        <button class="btn-secondary" id="refreshTelemetryBtn" style="font-size: 12px;">Osveži</button>
-      </div>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Vreme</th>
-              <th>Lokacija</th>
-              <th>Kohorta</th>
-              <th>Odziv / Blokiranje</th>
-              <th>Baferovano</th>
-              <th>Greške</th>
-              <th>Stranica</th>
-            </tr>
-          </thead>
-          <tbody id="telemetryTableBody">
-            <tr>
-              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                Učitavanje telemetrije...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <script>
-    let currentStoreId = 'volimsvojdom';
-    let stores = [];
-    let selectedPercent = 1;
-
-    async function loadAdmin() {
+<!doctype html>
+<!-- Generated by scripts/build-ui.mjs; edit src/ui/theme.css and application.js. -->
+<html lang="sr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Administracija | MerchantPro Lab</title><style>:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#22272b;background:#f5f6f7;font-size:13px;line-height:1.5;font-synthesis:none;--muted:#626a73;--border:#dce0e3;--green:#217348;--red:#b42318;--amber:#946200}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:wait;opacity:.55}button,input,select{border:1px solid #bdc3c9;border-radius:3px;padding:6px 10px;background:white;color:inherit}button:hover{background:#eef0f2}button.primary{background:#292f35;color:white;border-color:#292f35}button.danger{color:var(--red);border-color:#d7aaa6}a{color:inherit;text-underline-offset:3px}a:hover{color:#315b85}:focus-visible{outline:2px solid #406b97;outline-offset:3px}[hidden]{display:none!important}
+.topbar{height:54px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 28px;gap:20px}.brand{font-weight:650;letter-spacing:-.3px}.topright{display:flex;align-items:center;gap:18px}.muted,.note{color:var(--muted)}main{max-width:1440px;margin:28px auto;padding:0 28px}h1{font-size:23px;letter-spacing:-.5px;line-height:1.3;margin:0 0 4px;font-weight:650}h2{font-size:14px;margin:0;font-weight:650}h3{font-size:13px;margin:0 0 14px}p{margin:8px 0}.pagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}.meta{display:flex;gap:20px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:12px}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.period{display:flex}.period button{border-radius:0;border-right:0}.period button:first-child{border-radius:3px 0 0 3px}.period button:last-child{border-right:1px solid #bdc3c9;border-radius:0 3px 3px 0}.period button[aria-pressed=true]{background:#292f35;color:white}.tabs{display:flex;gap:24px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto}.tabs button{background:none;border:0;border-radius:0;padding:10px 0;color:var(--muted);white-space:nowrap;border-bottom:2px solid transparent}.tabs button[aria-current=page]{border-bottom-color:#292f35;color:#22272b;font-weight:650}.summary{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid var(--border);background:white;border-radius:4px;margin-bottom:20px}.summary>section{padding:18px 20px;min-width:0}.summary>section+section{border-left:1px solid var(--border)}.eyebrow{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}.rows{margin:14px 0 0}.row{display:flex;justify-content:space-between;gap:16px;padding:5px 0}.row dt{color:var(--muted)}.row dd{margin:0;font-variant-numeric:tabular-nums;text-align:right}.note{font-size:12px;margin-top:12px}.panel{background:white;border:1px solid var(--border);border-radius:4px;margin-bottom:20px;min-width:0}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 18px;border-bottom:1px solid var(--border)}.body{padding:18px}.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;white-space:nowrap}.status::before{content:"";width:6px;height:6px;background:#8a9199;border-radius:50%}.status.ok{color:var(--green)}.status.ok::before{background:var(--green)}.status.warning{color:var(--amber)}.status.warning::before{background:var(--amber)}.status.error{color:var(--red)}.status.error::before{background:var(--red)}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;text-align:left;font-size:12px;font-variant-numeric:tabular-nums}th{font-weight:550;color:var(--muted);background:#fafbfb;white-space:nowrap}th,td{padding:9px 12px;border-bottom:1px solid #e9ebed;vertical-align:top}tbody tr:last-child td{border-bottom:0}tbody tr:hover{background:#f8f9fa}td.nowrap{white-space:nowrap}.path{display:block;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.empty{padding:26px 18px;color:var(--muted);font-size:13px}.message{margin-bottom:16px;padding:10px 12px;border:1px solid var(--border);background:white}.message.error{color:var(--red);border-color:#e0b3af}.filters{display:flex;gap:12px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--border)}.filters label{display:flex;align-items:center;gap:6px;font-size:12px}.config{max-width:760px}.formrow{display:flex;align-items:center;gap:12px;margin:12px 0}.choices{display:flex;gap:6px;flex-wrap:wrap}.choices button[aria-pressed=true]{background:#292f35;color:white}.dangerzone{border-top:1px solid #dec5c3;margin-top:24px;padding-top:18px}.chart{width:100%;height:190px;display:block}.legend{display:flex;gap:20px;font-size:12px;color:var(--muted);flex-wrap:wrap}.login{min-height:100vh;display:grid;place-items:center;padding:24px}.loginbox{width:100%;max-width:360px}.loginbox form{margin-top:26px}.loginbox label{display:block;margin:14px 0 6px}.loginbox input{width:100%;padding:9px 10px}.loginbox button{width:100%;margin-top:22px;padding:9px}.loginbox h1{font-size:22px}.loginbox .message{margin-top:16px}code{font-size:11px}dialog{border:1px solid var(--border);border-radius:4px;max-width:440px;padding:24px}dialog::backdrop{background:#17212b55}dialog .controls{margin-top:20px;justify-content:flex-end}.count{font-variant-numeric:tabular-nums}svg text{font:11px sans-serif;fill:#626a73}@media(max-width:800px){main{padding:0 16px;margin-top:20px}.topbar{padding:0 16px}.summary{grid-template-columns:1fr}.summary>section+section{border-left:0;border-top:1px solid var(--border)}.pagehead{flex-direction:column}.topright .muted{display:none}.meta{gap:8px 16px}.tabs{gap:20px}.panelhead{align-items:flex-start}.chart{height:170px}}
+</style></head><body data-page="admin"><div id="app"></div><script>/* Shared presentation layer. API/runtime contracts remain unchanged. */
+(() => {
+  'use strict';
+  const page = document.body.dataset.page;
+  const app = document.getElementById('app');
+  const vendors = { meta: 'Meta Pixel', gtm: 'Google / GTM / GA4', tiktok: 'TikTok Pixel' };
+  const state = { period: '24h', tab: 'overview', stores: [], data: null, storeId: null, request: 0, saving: false };
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const numeric = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+  const number = value => numeric(value) ? value.toLocaleString('sr-Latn-RS', { maximumFractionDigits: 1 }) : '—';
+  const date = value => value != null && Number.isFinite(new Date(value).getTime()) ? new Date(value).toLocaleString('sr-Latn-RS') : 'Nema podataka';
+  const status = (label, tone = '') => `<span class="status ${tone}">${esc(label)}</span>`;
+  const row = (label, value) => `<div class="row"><dt>${esc(label)}</dt><dd>${value}</dd></div>`;
+  const panel = (title, body, subtitle = '') => `<section class="panel"><div class="panelhead"><h2>${title}</h2><span class="muted">${subtitle}</span></div>${body}</section>`;
+  const table = (headers, rows, empty = 'Nema podataka za izabrani period.') => `<div class="tablewrap"><table><thead><tr>${headers.map(x => `<th scope="col">${x}</th>`).join('')}</tr></thead><tbody>${rows || `<tr><td colspan="${headers.length}" class="empty">${empty}</td></tr>`}</tbody></table></div>`;
+  const sessions = () => state.data?.metrics?.recentSessions || [];
+  // The API lastCheckTime falls back to Date.now() for empty datasets; never use it as evidence.
+  const lastSeen = list => list.filter(s => numeric(s.timestamp)).reduce((last, s) => Math.max(last, s.timestamp), 0) || null;
+  const fresh = s => numeric(s.timestamp) && Date.now() - s.timestamp >= 0 && Date.now() - s.timestamp <= 86400000;
+  function vendorHealth(list, key) {
+    const observed = list.filter(fresh).map(s => s[key]);
+    if (observed.includes('failed')) return ['Greška', 'error'];
+    if (observed.some(x => x === 'loading' || x === 'deferred')) return ['Upozorenje', 'warning'];
+    if (observed.length && observed.every(x => x === 'loaded')) return ['Ispravno', 'ok'];
+    return ['Nema podataka', ''];
+  }
+  function health(list) {
+    const states = Object.keys(vendors).map(k => vendorHealth(list, k));
+    if (states.some(x => x[1] === 'error')) return ['Greška', 'error'];
+    if (states.some(x => x[1] === 'warning')) return ['Upozorenje', 'warning'];
+    if (states.every(x => x[1] === 'ok')) return ['Ispravno', 'ok'];
+    return ['Nema podataka', ''];
+  }
+  function trackingCell(s) {
+    if (Object.keys(vendors).some(k => s[k] === 'failed')) return status('Greška', 'error');
+    if (Object.keys(vendors).some(k => s[k] === 'deferred')) return status('Odloženo');
+    if (Object.keys(vendors).some(k => s[k] === 'loading')) return status('Učitavanje');
+    if (Object.keys(vendors).every(k => s[k] === 'loaded')) return status('Skripte učitane');
+    return status('Nema podataka');
+  }
+  function classification(s) {
+    if (s.classification) return s.classification;
+    return s.cohort === 'search_engine_baseline' ? 'Search crawler' : 'Nepoznato';
+  }
+  function pathLink(value) {
+    try {
+      const url = new URL(value);
+      if (!['https:', 'http:'].includes(url.protocol)) return '—';
+      return `<a class="path" href="${esc(url.href)}" title="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(url.pathname)}</a>`;
+    } catch { return '—'; }
+  }
+  async function api(url, options) {
+    const response = await fetch(url, options);
+    if (response.status === 401) { location.href = '/login'; throw new Error('Prijava je istekla.'); }
+    if (!response.ok) throw new Error(`Zahtev nije uspeo (${response.status}).`);
+    return response.json();
+  }
+  function message(text = '', error = false) {
+    const el = document.getElementById('message');
+    el.textContent = text; el.hidden = !text; el.className = `message${error ? ' error' : ''}`;
+  }
+  function shell(user) {
+    app.innerHTML = `<header class="topbar"><div class="brand">MerchantPro Lab${page === 'admin' ? ' <span class="muted">/ Administracija</span>' : ''}</div><div class="topright"><span class="muted">${esc(user.email)}</span><button id="logout">Odjava</button></div></header><main><div id="message" class="message" role="status" aria-live="polite" hidden></div><div id="stores"></div><div id="detail"><div class="empty">Učitavanje podataka…</div></div></main>`;
+    document.getElementById('logout').onclick = async () => {
+      try { await api('/api/auth/logout', { method: 'POST' }); localStorage.removeItem('sd_token'); location.href = '/login'; }
+      catch (error) { message(error.message, true); }
+    };
+  }
+  function login() {
+    app.innerHTML = `<main class="login"><div class="loginbox"><h1>MerchantPro Lab</h1><p class="muted">Nadzor performansi i tracking integracija</p><div id="message" class="message" role="alert" hidden></div><form id="loginForm"><label for="email">E-mail</label><input id="email" type="email" autocomplete="username" required autofocus><label for="password">Lozinka</label><input id="password" type="password" autocomplete="current-password" required><button class="primary" id="submit">Prijavi se</button></form></div></main>`;
+    document.getElementById('loginForm').onsubmit = async event => {
+      event.preventDefault(); message();
+      const button = document.getElementById('submit'); button.disabled = true; button.textContent = 'Provera…';
       try {
-        const authRes = await fetch('/api/auth/me');
-        if (!authRes.ok) { window.location.href = '/login'; return; }
-        const authData = await authRes.json();
-        if (authData.user.role !== 'ADMIN') { window.location.href = '/dashboard'; return; }
-        document.getElementById('userGreeting').textContent = authData.user.email;
-
-        const res = await fetch('/api/admin/stores');
-        if (!res.ok) throw new Error('Greška pri učitavanju');
-        const data = await res.json();
-        stores = data.stores;
-
+        const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: document.getElementById('email').value.trim(), password: document.getElementById('password').value }) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Neispravni podaci za prijavu.');
+        if (data.token) localStorage.setItem('sd_token', data.token);
+        location.href = data.user?.role === 'ADMIN' ? '/admin' : '/dashboard';
+      } catch (error) { message(error.message, true); button.disabled = false; button.textContent = 'Prijavi se'; }
+    };
+  }
+  function lab() {
+    const m = state.data.metrics;
+    const valid = numeric(m.baselineBlockingMs) && numeric(m.optimizedBlockingMs);
+    const seconds = n => (n / 1000).toLocaleString('sr-Latn-RS', { maximumFractionDigits: 1 });
+    const signed = n => `${n > 0 ? '+' : ''}${n.toLocaleString('sr-Latn-RS', { maximumFractionDigits: 1 })}`;
+    return `<section><div class="eyebrow">LAB / KONTROLISANI TEST</div><h2>Performanse</h2><p class="muted">Kontrolisani test</p><dl class="rows">${row('Standardno', valid ? `${seconds(m.baselineBlockingMs)} s TBT` : '—')}${row('Smart Deferral', valid ? `${seconds(m.optimizedBlockingMs)} s TBT` : '—')}${row('Razlika', valid ? `${signed((m.optimizedBlockingMs - m.baselineBlockingMs) / 1000)} s` : '—')}${row('Promena', valid && m.baselineBlockingMs > 0 ? `${signed((m.optimizedBlockingMs / m.baselineBlockingMs - 1) * 100)}%` : '—')}</dl><p class="note">Rezultat kontrolisanog performance testa.</p><details class="note"><summary>Šta meri TBT?</summary><p>Total Blocking Time meri vreme tokom kojeg je glavni browser thread blokiran dugim zadacima.</p><p>API ne dostavlja datum ni identifikator testa.</p></details></section>`;
+  }
+  function tracking() {
+    const list = sessions();
+    return `<section><div class="eyebrow">PRODUKCIONA TELEMETRIJA</div><div class="controls"><h2>Tracking</h2>${status(...health(list))}</div><dl class="rows">${Object.entries(vendors).map(([key, title]) => row(title, status(...vendorHealth(list, key)))).join('')}${row('Detektovane tracking greške', 'Nema podataka')}${row('Poslednja provera', esc(date(lastSeen(list))))}</dl><p class="note">Status učitavanja skripti u dostupnom uzorku iz poslednja 24h. Ne potvrđuje isporuku događaja ili porudžbina. Odložene skripte zahtevaju proveru.</p></section>`;
+  }
+  function traffic() {
+    const m = state.data.metrics;
+    return `<section><div class="eyebrow">${state.period} / PRIMLJENI ZAPISI</div><h2>Analizirane sesije</h2><dl class="rows">${row('Ukupno', number(m.totalSessions))}${row('Srbija', number(m.countryBreakdown?.RS ?? (m.countryBreakdown ? 0 : null)))}${row('Pretraživači', number(m.searchCrawlers))}${row('Ostalo / nepoznato', 'Nema podataka')}${row('Detektovane greške', number(m.totalErrors))}</dl><p class="note">Srbija je geografski presek; pretraživači su klasifikacija. Redovi nisu zbirne kategorije. API broji telemetry zapise, bez potvrđene deduplikacije sesija.</p></section>`;
+  }
+  function percentile(values, p) {
+    const sorted = [...values].sort((a, b) => a - b), index = (sorted.length - 1) * p;
+    return sorted.length ? sorted[Math.floor(index)] + (sorted[Math.ceil(index)] - sorted[Math.floor(index)]) * (index % 1) : null;
+  }
+  function history() {
+    const records = sessions().filter(s => numeric(s.longTaskBlockingMs) && numeric(s.timestamp));
+    if (!records.length) return panel('Performanse kroz vreme', '<div class="empty">Nema produkcionih merenja longTaskBlockingMs za izabrani period.</div>', `${state.period} · Produkciona telemetrija`);
+    // Do not infer optimization from cohort: kill switch and vendor settings can change actual mode.
+    const groups = [ ['Kontrolna grupa', records.filter(s => s.mode === 'immediate_fallback'), '#3e4853'], ['Optimizovana grupa', records.filter(s => s.mode === 'smart_deferral_canary'), '#587d9a'], ['Režim nije dostupan', records.filter(s => !['immediate_fallback', 'smart_deferral_canary'].includes(s.mode)), '#868b91'] ].filter(g => g[1].length);
+    const start = Math.min(...records.map(s => s.timestamp)), end = Math.max(...records.map(s => s.timestamp));
+    const bucketSize = Math.max(3600000, (end - start + 1) / 12);
+    const series = groups.map(([name, values, color]) => {
+      const buckets = new Map();
+      values.forEach(s => { const k = Math.floor((s.timestamp - start) / bucketSize); if (!buckets.has(k)) buckets.set(k, []); buckets.get(k).push(s.longTaskBlockingMs); });
+      return { name, color, values, points: [...buckets].sort((a, b) => a[0] - b[0]).map(([k, v]) => ({ time: start + k * bucketSize, median: percentile(v, .5), p75: v.length >= 20 ? percentile(v, .75) : null, n: v.length })) };
+    });
+    const max = Math.max(1, ...series.flatMap(g => g.points.map(p => Math.max(p.median, p.p75 ?? 0))));
+    const x = t => 60 + (t - start) / Math.max(end - start, bucketSize) * 820;
+    const y = v => 140 - v / max * 115;
+    const chart = `<svg class="chart" viewBox="0 0 960 185" role="img" aria-label="Medijana longTaskBlockingMs po vremenskim intervalima. Vrednosti su dostupne u tabeli ispod."><line x1="60" y1="140" x2="910" y2="140" stroke="#dce0e3"/><line x1="60" y1="25" x2="910" y2="25" stroke="#edf0f2"/><text x="0" y="29">${esc(number(max))} ms</text><text x="20" y="144">0</text>${series.map(g => `<polyline fill="none" stroke="${g.color}" stroke-width="2" points="${g.points.map(p => `${x(p.time)},${y(p.median)}`).join(' ')}"/>${g.points.map(p => `<circle cx="${x(p.time)}" cy="${y(p.median)}" r="3" fill="${g.color}"><title>${esc(date(p.time))}: ${esc(number(p.median))} ms · n=${p.n}</title></circle>${p.p75 === null ? '' : `<circle cx="${x(p.time)}" cy="${y(p.p75)}" r="3" fill="white" stroke="${g.color}"><title>p75: ${esc(number(p.p75))} ms</title></circle>`}`).join('')}`).join('')}<text x="60" y="173">${esc(date(start))}</text><text x="910" y="173" text-anchor="end">${esc(date(end))}</text></svg>`;
+    const stats = series.map(g => `<tr><td>${esc(g.name)}</td><td>${g.values.length}</td><td>${number(percentile(g.values.map(s => s.longTaskBlockingMs), .5))} ms</td><td>${g.values.length >= 20 ? `${number(percentile(g.values.map(s => s.longTaskBlockingMs), .75))} ms` : 'Nedovoljan uzorak'}</td></tr>`).join('');
+    return panel('Performanse kroz vreme', `<div class="body"><div class="eyebrow">PRODUKCIONA TELEMETRIJA / longTaskBlockingMs</div>${chart}<div class="legend">${series.map(g => `<span style="color:${g.color}">${esc(g.name)}</span>`).join('')}<span>Puna tačka: medijana · Prazna tačka: p75</span></div><p class="note">Dostupno ${records.length} merenja od ${number(state.data.metrics.totalSessions)} zapisa u periodu. API vraća najviše 50 poslednjih zapisa. p75 se prikazuje za n ≥ 20 (prag prikaza, bez tvrdnje o statističkoj pouzdanosti). Režim se ne izvodi iz kohorte.</p></div>${table(['Grupa', 'Uzorak', 'Medijana', 'p75'], stats)}<details class="body"><summary>Podaci po intervalu</summary>${table(['Interval', 'Grupa', 'Uzorak', 'Medijana', 'p75'], series.flatMap(g => g.points.map(p => `<tr><td>${esc(date(p.time))}</td><td>${esc(g.name)}</td><td>${p.n}</td><td>${number(p.median)} ms</td><td>${p.p75 === null ? '—' : `${number(p.p75)} ms`}</td></tr>`)).join(''))}</details>`, esc(state.period));
+  }
+  // Reserved schema: {control, optimized}: {sessions, orders, revenue, conversionRate, revenuePerSession}, observedDifference.
+  function businessImpact() {
+    return panel('Poslovni uticaj', '<div class="empty">Još nema dovoljno podataka za analizu poslovnog uticaja.</div>');
+  }
+  function sessionRows(list, admin) {
+    return list.map(s => `<tr><td class="nowrap">${esc(date(s.timestamp))}</td><td>${esc(s.country || 'Nepoznato')}</td><td>${esc(classification(s))}</td>${admin ? `<td><code>${esc(s.cohort || '—')}</code></td>` : ''}<td>${esc(s.mode || 'Nema podataka')}</td><td class="nowrap">${numeric(s.longTaskBlockingMs) ? `${number(s.longTaskBlockingMs)} ms` : '—'}</td>${admin ? `<td>${number(s.eventsBuffered)}</td>` : ''}<td>${trackingCell(s)}</td><td>${numeric(s.errorsCount) && s.errorsCount > 0 ? status(number(s.errorsCount), 'error') : number(s.errorsCount)}</td><td>${pathLink(s.url)}</td></tr>`).join('');
+  }
+  function telemetry(admin = false, errorsOnly = false) {
+    const list = sessions();
+    const options = key => [...new Set(list.map(s => s[key]).filter(Boolean))].sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    const filters = admin ? `<div class="filters"><label>Država <select id="country"><option value="">Sve</option>${options('country')}</select></label><label>Cohort <select id="cohort"><option value="">Sve</option>${options('cohort')}</select></label><label>Mode <select id="mode"><option value="">Svi</option>${options('mode')}</select></label><label>Vendor state <select id="vendorState"><option value="">Svi</option>${[...new Set(list.flatMap(s => Object.keys(vendors).map(k => s[k])).filter(Boolean))].sort().map(x => `<option>${esc(x)}</option>`).join('')}</select></label><label><input id="errorsOnly" type="checkbox" ${errorsOnly ? 'checked' : ''}>Samo greške</label></div>` : '';
+    const headers = admin ? ['Vreme', 'Država', 'Klasifikacija', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'] : ['Vreme', 'Lokacija', 'Tip', 'Režim', 'Blokiranje', 'Tracking', 'Greške', 'Stranica'];
+    return panel(errorsOnly ? 'Greške' : admin ? 'Live telemetry' : 'Nedavne sesije', `${filters}<div id="sessionTable">${table(headers, sessionRows(list.filter(s => !errorsOnly || s.errorsCount > 0), admin))}</div><p class="note body">Poslednjih ${list.length} dostupnih zapisa · ${state.period}. Osvežavanje na zahtev.</p>`, '<button id="refresh">Osveži</button>');
+  }
+  function configuration() {
+    const s = state.data.store;
+    return panel('Konfiguracija', `<form id="config" class="body config"><h3>Rollout</h3><div class="choices">${[0, 1, 5, 10, 100].map(n => `<button type="button" data-rollout="${n}" aria-pressed="${s.canaryPercent === n}">${n}%</button>`).join('')}</div><p>Trenutno: <span class="count">${number(s.canaryPercent)}%</span></p><p class="note">Procenat sesija iz Srbije na kojima je Smart Deferral aktivan.</p><label class="formrow"><input type="checkbox" id="enabled" ${s.killSwitch === false ? 'checked' : ''}>Smart Deferral: Aktivan</label><h3>Trackeri</h3>${Object.entries(vendors).map(([k, title]) => `<label class="formrow"><input type="checkbox" id="vendor-${k}" ${s.vendors?.[k] === true ? 'checked' : ''}>${esc(title)}</label>`).join('')}<button class="primary" type="submit">Sačuvaj</button><div class="dangerzone"><h3>Hitne kontrole</h3><p class="note">Odmah vraća standardno učitavanje za sve sesije.</p><button type="button" class="danger" id="emergency">Isključi Smart Deferral</button></div></form><dialog id="confirm"><h2>Isključi Smart Deferral?</h2><p>Standardno učitavanje biće vraćeno za sve sesije. Nesаčuvane izmene konfiguracije neće biti primenjene.</p><div class="controls"><button id="cancel">Otkaži</button><button id="confirmDisable" class="danger">Potvrdi isključivanje</button></div></dialog>`);
+  }
+  function renderDetail() {
+    const admin = page === 'admin', s = state.data.store;
+    const tabs = admin ? [['overview', 'Pregled'], ['sessions', 'Telemetry'], ['performance', 'Performance'], ['tracking', 'Tracking'], ['config', 'Konfiguracija'], ['errors', 'Greške']] : [['overview', 'Pregled'], ['performance', 'Performanse'], ['tracking', 'Tracking'], ['sessions', 'Sesije']];
+    const activity = s.status === 'live' && s.killSwitch === false ? 'Aktivno' : s.status === 'pilot' ? 'Pilot' : 'Neaktivno';
+    const header = `<div class="pagehead"><div><h1>${esc(s.name)}</h1><div class="muted">${esc(s.domain)}</div><div class="meta"><span>Platforma: ${esc(s.platform || 'Nema podataka')}</span><span>Runtime: ${esc(s.runtimeVersion || 'Nema podataka')}</span><span>Poslednji podaci: ${esc(date(lastSeen(sessions())))}</span></div></div><div class="controls">${status(admin && s.status === 'live' && !s.killSwitch ? 'Live' : activity)}${!admin ? `<div class="period" aria-label="Period">${['24h', '7d', '30d'].map(p => `<button data-period="${p}" aria-pressed="${state.period === p}">${p}</button>`).join('')}</div>` : '<span class="muted">24h</span>'}</div></div>`;
+    let body = '';
+    if (state.tab === 'overview') body = `<div class="summary">${lab()}${tracking()}${traffic()}</div>${history()}${businessImpact()}${telemetry(admin)}`;
+    if (state.tab === 'performance') body = `<div class="panel body">${lab()}</div>${history()}${businessImpact()}`;
+    if (state.tab === 'tracking') body = `<div class="panel body">${tracking()}</div>${telemetry(admin)}`;
+    if (state.tab === 'sessions' || state.tab === 'errors') body = telemetry(admin, state.tab === 'errors');
+    if (state.tab === 'config') body = configuration();
+    document.getElementById('detail').innerHTML = `${header}<nav class="tabs" aria-label="${admin ? 'Administracija prodavnice' : 'Prodavnica'}">${tabs.map(([key, label]) => `<button data-tab="${key}" ${state.tab === key ? 'aria-current="page"' : ''}>${label}</button>`).join('')}</nav>${body}`;
+    document.querySelectorAll('[data-tab]').forEach(button => button.onclick = () => { state.tab = button.dataset.tab; renderDetail(); });
+    document.querySelectorAll('[data-period]').forEach(button => button.onclick = () => loadDetail(button.dataset.period));
+    const refresh = document.getElementById('refresh'); if (refresh) refresh.onclick = () => loadDetail(state.period);
+    if (admin) wireFilters();
+    if (state.tab === 'config') wireConfig();
+  }
+  function wireFilters() {
+    const ids = ['country', 'cohort', 'mode', 'vendorState', 'errorsOnly'];
+    if (!document.getElementById('country')) return;
+    ids.forEach(id => document.getElementById(id).onchange = () => {
+      const value = k => document.getElementById(k).value;
+      const list = sessions().filter(s => ['country', 'cohort', 'mode'].every(k => !value(k) || s[k] === value(k)) && (!value('vendorState') || Object.keys(vendors).some(k => s[k] === value('vendorState'))) && (!document.getElementById('errorsOnly').checked || s.errorsCount > 0));
+      document.getElementById('sessionTable').innerHTML = table(['Vreme', 'Država', 'Klasifikacija', 'Cohort', 'Mode', 'Blocking', 'Buffered', 'Tracking', 'Errors', 'Page'], sessionRows(list, true), 'Nema zapisa za izabrane filtere.');
+    });
+  }
+  function renderStores() {
+    document.getElementById('stores').innerHTML = panel('Prodavnice', table(['Prodavnica', 'Platforma', 'Status', 'Rollout', 'Sesije 24h', 'Greške 24h', 'Tracking', 'Poslednji podaci', 'Runtime', 'Akcija'], state.stores.map(s => `<tr><td><strong>${esc(s.name)}</strong><div class="muted">${esc(s.domain)}</div></td><td>${esc(s.platform)}</td><td>${status(s.killSwitch ? 'Neaktivno' : s.status === 'live' ? 'Live' : s.status === 'pilot' ? 'Pilot' : s.status || 'Nema podataka')}</td><td>${number(s.canaryPercent)}%</td><td>${number(s.totalSessions)}</td><td>${number(s.totalErrors)}</td><td>${status(...(s._metrics ? health(s._metrics.recentSessions || []) : ['Nema podataka', '']))}</td><td>${esc(date(s._metrics ? lastSeen(s._metrics.recentSessions || []) : null))}</td><td>${esc(s.runtimeVersion || 'Nema podataka')}</td><td><button data-store="${esc(s.id)}" ${state.saving ? 'disabled' : ''}>Otvori</button></td></tr>`).join('')));
+    document.querySelectorAll('[data-store]').forEach(button => button.onclick = () => { state.storeId = button.dataset.store; state.tab = 'overview'; loadDetail('24h'); });
+  }
+  async function loadDetail(period) {
+    const request = ++state.request;
+    message(); document.getElementById('detail').setAttribute('aria-busy', 'true');
+    try {
+      const data = await api(page === 'admin' ? `/api/admin/stores/${encodeURIComponent(state.storeId)}` : `/api/client/overview?period=${encodeURIComponent(period)}`);
+      if (request !== state.request) return;
+      state.data = data; state.period = period;
+      if (page === 'admin') {
+        const store = state.stores.find(s => s.id === data.store.id);
+        if (store) Object.assign(store, data.store, { _metrics: data.metrics, totalSessions: data.metrics.totalSessions, totalErrors: data.metrics.totalErrors });
         renderStores();
-        pickStore(currentStoreId);
-      } catch (err) {
-        console.error(err);
       }
-    }
-
-    function renderStores() {
-      const tbody = document.getElementById('storesTableBody');
-      tbody.innerHTML = stores.map(s => `
-        <tr class="${s.id === currentStoreId ? 'selected' : ''}">
-          <td><strong>${s.name}</strong><div style="font-size:11px;color:var(--text-muted);">${s.domain}</div></td>
-          <td>${s.platform}</td>
-          <td><span class="tag ${s.status === 'live' ? 'tag-live' : 'tag-pilot'}">${s.status.toUpperCase()}</span></td>
-          <td><strong>${s.canaryPercent}%</strong></td>
-          <td>${s.totalErrors === 0 ? '<span style="color:var(--success);font-weight:600;">0</span>' : '<span style="color:var(--danger);font-weight:600;">' + s.totalErrors + '</span>'}</td>
-          <td><span style="color:var(--success);font-weight:600;">✓ Ispravno</span></td>
-          <td><button class="btn-sm" onclick="pickStore('${s.id}')">Podesi</button></td>
-        </tr>
-      `).join('');
-    }
-
-    function pickStore(storeId) {
-      currentStoreId = storeId;
-      const s = stores.find(x => x.id === storeId);
-      if (!s) return;
-
-      document.getElementById('activeStoreHeading').textContent = s.name;
-      selectedPercent = s.canaryPercent;
-
-      document.querySelectorAll('#canaryGroup .btn-choice').forEach(btn => {
-        btn.classList.toggle('active', parseInt(btn.dataset.percent, 10) === selectedPercent);
-      });
-
-      document.getElementById('killSwitchCheckbox').checked = !s.killSwitch;
-      document.getElementById('vendorMeta').checked = s.vendors.meta;
-      document.getElementById('vendorGtm').checked = s.vendors.gtm;
-      document.getElementById('vendorTiktok').checked = s.vendors.tiktok;
-
-      loadTelemetry(storeId);
-      renderStores();
-    }
-
-    async function loadTelemetry(storeId) {
-      const tbody = document.getElementById('telemetryTableBody');
-      try {
-        const res = await fetch(`/api/admin/stores/${storeId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const sessions = data.metrics.recentSessions || [];
-
-        if (sessions.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:20px;">Nema nedavnih unosa telemetrije.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = sessions.slice(0, 25).map(s => `
-          <tr>
-            <td style="color:var(--text-muted);">${new Date(s.timestamp).toLocaleTimeString()}</td>
-            <td><strong>${s.country || 'RS'}</strong></td>
-            <td><code>${s.cohort}</code></td>
-            <td>${s.longTaskBlockingMs || 0} ms</td>
-            <td>${s.eventsBuffered || 0}</td>
-            <td>${s.errorsCount === 0 ? '<span style="color:var(--success);">0</span>' : '<span style="color:var(--danger);font-weight:bold;">' + s.errorsCount + '</span>'}</td>
-            <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.url}">${s.url}</td>
-          </tr>
-        `).join('');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    document.getElementById('canaryGroup').addEventListener('click', (e) => {
-      if (e.target.dataset.percent !== undefined) {
-        selectedPercent = parseInt(e.target.dataset.percent, 10);
-        document.querySelectorAll('#canaryGroup .btn-choice').forEach(b => {
-          b.classList.toggle('active', b === e.target);
-        });
-      }
+      renderDetail();
+    } catch (error) {
+      if (request !== state.request) return;
+      message(`${error.message} Podaci nisu osveženi.`, true);
+      // Avoid showing another store's data under a newly selected identity.
+      document.getElementById('detail').innerHTML = '<div class="empty">Podaci nisu dostupni. <button id="retry">Pokušaj ponovo</button></div>';
+      document.getElementById('retry').onclick = () => loadDetail(period);
+    } finally { if (request === state.request) document.getElementById('detail').removeAttribute('aria-busy'); }
+  }
+  function wireConfig() {
+    let rollout = state.data.store.canaryPercent;
+    document.querySelectorAll('[data-rollout]').forEach(button => button.onclick = () => {
+      rollout = Number(button.dataset.rollout);
+      document.querySelectorAll('[data-rollout]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
     });
-
-    document.getElementById('saveBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('saveBtn');
-      btn.disabled = true;
-      btn.textContent = 'Čuvanje...';
-
-      const payload = {
-        canaryPercent: selectedPercent,
-        killSwitch: !document.getElementById('killSwitchCheckbox').checked,
-        vendors: {
-          meta: document.getElementById('vendorMeta').checked,
-          gtm: document.getElementById('vendorGtm').checked,
-          tiktok: document.getElementById('vendorTiktok').checked
-        }
-      };
-
-      try {
-        const res = await fetch(`/api/admin/stores/${currentStoreId}/config`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('Neuspešno čuvanje');
-
-        const toast = document.getElementById('saveToast');
-        toast.style.display = 'block';
-        setTimeout(() => { toast.style.display = 'none'; }, 3500);
-
-        const store = stores.find(x => x.id === currentStoreId);
-        if (store) {
-          store.canaryPercent = payload.canaryPercent;
-          store.killSwitch = payload.killSwitch;
-          store.vendors = payload.vendors;
-        }
+    document.getElementById('config').onsubmit = event => {
+      event.preventDefault();
+      saveConfig({ canaryPercent: rollout, killSwitch: !document.getElementById('enabled').checked, vendors: Object.fromEntries(Object.keys(vendors).map(k => [k, document.getElementById(`vendor-${k}`).checked])) });
+    };
+    const dialog = document.getElementById('confirm');
+    document.getElementById('emergency').onclick = () => dialog.showModal();
+    document.getElementById('cancel').onclick = () => dialog.close();
+    document.getElementById('confirmDisable').onclick = () => { dialog.close(); saveConfig({ killSwitch: true }); };
+  }
+  async function saveConfig(payload) {
+    if (state.saving) return;
+    state.saving = true;
+    const id = state.storeId;
+    document.querySelectorAll('main button, main input').forEach(el => el.disabled = true);
+    try {
+      const result = await api(`/api/admin/stores/${encodeURIComponent(id)}/config`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      state.data.store = result.store;
+      Object.assign(state.stores.find(s => s.id === id), result.store);
+      message('Konfiguracija je sačuvana.');
+    } catch (error) { message(`Greška pri čuvanju: ${error.message}`, true); }
+    finally { state.saving = false; renderStores(); renderDetail(); }
+  }
+  async function start() {
+    if (page === 'login') { login(); return; }
+    app.innerHTML = '<main class="empty">Učitavanje…</main>';
+    try {
+      const { user } = await api('/api/auth/me');
+      if (page === 'admin' && user.role !== 'ADMIN') { location.href = '/dashboard'; return; }
+      shell(user);
+      if (page === 'admin') {
+        const { stores } = await api('/api/admin/stores'); state.stores = stores; renderStores();
+        if (!stores.length) { document.getElementById('detail').innerHTML = '<div class="empty">Nema prodavnica.</div>'; return; }
+        state.storeId = stores[0].id;
+        // The list endpoint has no last-observation or vendor states. Read the
+        // existing detail endpoint for other rows rather than inventing summaries.
+        await Promise.allSettled(stores.slice(1).map(async store => {
+          const detail = await api(`/api/admin/stores/${encodeURIComponent(store.id)}`);
+          Object.assign(store, detail.store, { _metrics: detail.metrics });
+        }));
         renderStores();
-      } catch (err) {
-        alert('Greška pri čuvanju: ' + err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Sačuvaj konfiguraciju';
       }
-    });
-
-    document.getElementById('refreshTelemetryBtn').addEventListener('click', () => {
-      loadTelemetry(currentStoreId);
-    });
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      localStorage.removeItem('sd_token');
-      window.location.href = '/login';
-    });
-
-    loadAdmin();
-  </script>
-</body>
-</html>
+      await loadDetail('24h');
+    } catch (error) { app.innerHTML = `<main><p role="alert">${esc(error.message)}</p><button onclick="location.reload()">Pokušaj ponovo</button></main>`; }
+  }
+  start();
+})();
+</script></body></html>
